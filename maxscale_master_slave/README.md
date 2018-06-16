@@ -16,7 +16,7 @@ kubectl create -f maxscale.yaml
 To access the MaxScale node locally, create a port forward (substitute the appropriate pod name in the port forward command):
 ```sh
 kubectl get pod
-kubectl port-forward maxscale-d76cbd47c-sjb4t006:4006 4008:4008 9195:9195
+kubectl port-forward maxscale-d76cbd47c-sjb4t 4006:4006 4008:4008 9195:9195
 ```
 After this:
 ```
