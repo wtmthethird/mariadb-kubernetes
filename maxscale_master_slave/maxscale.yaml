@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: maxscale
+  name: maxscale
+spec:
+  ports:
+  - name: "4006"
+    port: 4006
+    targetPort: 4006
+  - name: "4008"
+    port: 4008
+    targetPort: 4008
+  - name: "9195"
+    port: 9195
+    targetPort: 9195
+  selector:
+    io.kompose.service: maxscale
+status:
+  loadBalancer: {}
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: maxscale
+  name: maxscale
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: maxscale
+    spec:
+      containers:
+      - args:
+        - maxscale
+        - -d
+        - -U
+        - maxscale
+        - --configdir=/etc/maxscale-cfg
+        image: mariadb/maxscale:latest
+        name: maxscale
+        ports:
+        - containerPort: 4006
+        - containerPort: 4008
+        resources: {}
+        volumeMounts:
+        - mountPath: /etc/maxscale-cfg
+          name: maxscale-claim0
+      - env:
+        - name: MAXSCALE_EXPORTER_LISTEN_ADDR
+          value: :9195
+        - name: MAXSCALE_MAXINFO_JSON_LISTENER_TCP_ADDR
+          value: localhost:8003
+        image: skord/maxscale_exporter
+        name: maxscale-exporter
+        ports:
+        - containerPort: 9195      
+      restartPolicy: Always
+      volumes:
+      - name: maxscale-claim0
+        configMap:
+          name: maxscale-cfg
+status: {}
