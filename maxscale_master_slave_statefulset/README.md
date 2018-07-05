@@ -18,6 +18,7 @@ After this:
 ```
 curl http://localhost:9195/metrics
 mysql -umaxuser -pmaxpwd -P4006 -h 127.0.0.1
+```
 
 The Kubernetes objects can be deleted using:
 ```sh
