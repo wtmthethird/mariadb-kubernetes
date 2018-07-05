@@ -1,0 +1,85 @@
+# Headless service for stable DNS entries for StatefulSet members
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-cluster
+  labels:
+    app: mariadb-masterslave-cluster
+spec:
+  ports:
+  - name: mariadb
+    port: 3306
+    targetPort: 3306
+  clusterIP: None
+  selector:
+    app: mariadb-masterslave-cluster
+---   
+# a StatefulSet for the master/slave cluster 
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb-masterslave
+spec:
+  selector:
+    matchLabels:
+      app: mariadb-masterslave-cluster
+  serviceName: mariadb-cluster
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: mariadb-masterslave-cluster
+    spec:
+      containers:
+      - command:
+        - bash
+        # copy the correct configuration for master or slave and start mysqld based on the pod hostname (ending in -0 is master, otherwise a slave)
+        - /mnt/config-map/start-mariadb-instance.sh 
+        env:
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "Y"
+        image: mariadb:10.3
+        name: mariadb-masterslave
+        ports:
+        - containerPort: 3306
+        resources: {}
+        volumeMounts:
+        - name: mariadb-config-vol
+          mountPath: /docker-entrypoint-initdb.d
+        - name: mariadb-configmap-vol
+          mountPath: /mnt/config-map
+        # a permanent volume for data storage
+        - name: mariadb-data-vol
+          mountPath: /var/lib/mysql
+          subPath: mysql
+        livenessProbe:
+          exec:
+            command: ["mysqladmin", "ping"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            # Check we can execute queries over TCP (skip-networking is off).
+            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          timeoutSeconds: 1
+      restartPolicy: Always
+      volumes:
+      - name: mariadb-config-vol
+        emptyDir: {}
+      - name: maxscale-config-vol
+        emptyDir: {}
+      - name: mariadb-configmap-vol
+        configMap:
+          name: mariadb-masterslave-config
+  # ensures persistent volumes end up on the same pod
+  volumeClaimTemplates:
+  - metadata:
+      name: mariadb-data-vol
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
