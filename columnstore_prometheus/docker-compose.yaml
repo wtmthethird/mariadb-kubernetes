@@ -1,0 +1,67 @@
+version: '3'
+services:
+  mariadb-cs-pm1:
+    hostname: mariadb-cs-pm1
+    build:
+      context: ./um/.
+    depends_on:
+      - columnstore
+      - mariadb-cs-pm2
+    environment:
+      - UM_NODE_IP=${UM_NODE_IP}
+      - PM1_NODE_IP=${PM1_NODE_IP}
+      - PM2_NODE_IP=${PM2_NODE_IP}
+    container_name: pm1
+    command: ./entrypoint.sh
+    networks:
+      app_net:
+        ipv4_address: ${PM1_NODE_IP}
+
+  mariadb-cs-pm2:
+    hostname: mariadb-cs-pm2
+    build:
+      context: ./um/.
+    command: /entrypoint2.sh
+    container_name: pm2
+    networks:
+      app_net:
+        ipv4_address: ${PM2_NODE_IP}
+
+
+  columnstore:
+    hostname: columnstore
+    build:
+      context: ./um/.
+    expose:
+      - 3306
+    ports:
+      - "3306:3306"
+    command: /entrypoint2.sh
+    container_name: um
+    networks:
+      app_net:
+        ipv4_address: ${UM_NODE_IP}
+        
+  prometheus:
+    hostname: prometheus
+    build:
+      context: ./prometheus/.
+    depends_on:
+      - columnstore
+      - mariadb-cs-pm2
+      - mariadb-cs-pm1
+    expose:
+      - 9090
+    ports:
+      - "9090:9090"
+    container_name: prometheus
+    networks:
+      app_net:
+        ipv4_address: ${PROM_NODE_IP}
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: ${SUBNET}
