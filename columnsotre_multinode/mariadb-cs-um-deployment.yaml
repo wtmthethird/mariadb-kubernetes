@@ -19,14 +19,12 @@ spec:
     spec:
       hostname: mariadb-cs-um
       containers:
-      - args:
-        - /usr/sbin/sshd
-        - -D
+      - args: ["./entrypoint2.sh"]
         env:
         ports:
         - containerPort: 22
         - containerPort: 3306
-        image: alphatoxic/mcs:latest
+        image: alphatoxic/mariadb-kubernetes:latest
         name: um
         resources: {}
       restartPolicy: Always

@@ -19,9 +19,8 @@ spec:
     spec:
       hostname: mariadb-cs-pm1
       containers:
-      - args:
-        - ./entrypoint.sh
-        image: alphatoxic/mcs:latest
+      - args: ["./entrypoint.sh"]
+        image: alphatoxic/mariadb-kubernetes:latest
         name: pm1
         resources: {}
       restartPolicy: Always
