@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.7.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: mariadb-cs-um
+  name: mariadb-cs-um
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: mariadb-cs-um
+    spec:
+      hostname: mariadb-cs-um
+      containers:
+      - args:
+        - /usr/sbin/sshd
+        - -D
+        env:
+        ports:
+        - containerPort: 22
+        - containerPort: 3306
+        image: alphatoxic/mcs:latest
+        name: um
+        resources: {}
+      restartPolicy: Always
+status: {}

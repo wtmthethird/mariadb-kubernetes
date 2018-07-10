@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.7.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: mariadb-cs-um
+  name: mariadb-cs-um
+spec:
+  clusterIP: "None"
+  ports:
+  - name: "22"
+    port: 22
+    targetPort: 22
+  - name: "3306"
+    port: 3306
+    targetPort: 3306
+  - name: "8600"
+    port: 8600
+    targetPort: 8600
+  - name: "8601"
+    port: 8601
+    targetPort: 8601
+  - name: "8602"
+    port: 8602
+    targetPort: 8602
+  - name: "8603"
+    port: 8603
+    targetPort: 8603
+  - name: "8604"
+    port: 8604
+    targetPort: 8604
+  - name: "8605"
+    port: 8605
+    targetPort: 8605
+  - name: "8606"
+    port: 8606
+    targetPort: 8606
+  - name: "8607"
+    port: 8607
+    targetPort: 8607
+  - name: "8608"
+    port: 8608
+    targetPort: 8608
+  - name: "8609"
+    port: 8609
+    targetPort: 8609
+
+  - name: "8610"
+    port: 8610
+    targetPort: 8610
+  - name: "8611"
+    port: 8611
+    targetPort: 8611
+  - name: "8612"
+    port: 8612
+    targetPort: 8612
+  - name: "8613"
+    port: 8613
+    targetPort: 8613
+  - name: "8614"
+    port: 8614
+    targetPort: 8614
+  - name: "8615"
+    port: 8615
+    targetPort: 8615
+  - name: "8616"
+    port: 8616
+    targetPort: 8616
+  - name: "8617"
+    port: 8617
+    targetPort: 8617
+  - name: "8618"
+    port: 8618
+    targetPort: 8618
+  - name: "8619"
+    port: 8619
+    targetPort: 8619
+
+  - name: "8620"
+    port: 8620
+    targetPort: 8620
+  - name: "8621"
+    port: 8621
+    targetPort: 8621
+  - name: "8622"
+    port: 8622
+    targetPort: 8622
+  - name: "8630"
+    port: 8630
+    targetPort: 8630
+  - name: "8700"
+    port: 8700
+    targetPort: 8700
+  - name: "8800"
+    port: 8800
+    targetPort: 8800
+  selector:
+    io.kompose.service: mariadb-cs-um
+status:
+  loadBalancer: {}

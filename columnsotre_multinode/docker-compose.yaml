@@ -1,0 +1,76 @@
+version: '3'
+services:
+  mariadb-cs-pm1:
+    hostname: mariadb-cs-pm1
+    build:
+      context: ./um/.
+    depends_on:
+      - columnstore
+      - mariadb-cs-pm2
+    environment:
+      - UM_NODE_IP=${UM_NODE_IP}
+      - PM1_NODE_IP=${PM1_NODE_IP}
+      - PM2_NODE_IP=${PM2_NODE_IP}
+    expose:
+      - 3306
+    volumes:
+      - ./common:/root/common
+    container_name: pm1
+    command: ./entrypoint.sh
+    networks:
+      app_net:
+        ipv4_address: ${PM1_NODE_IP}
+
+  columnstore:
+    hostname: columnstore
+    build:
+      context: ./um/.
+    expose:
+      - 3306
+      - 22
+    ports:
+      - "3306:3306"
+    command: /usr/sbin/sshd -D
+    container_name: um
+    networks:
+      app_net:
+        ipv4_address: ${UM_NODE_IP}
+
+  mariadb-cs-pm2:
+    hostname: mariadb-cs-pm2
+    build:
+      context: ./um/.
+    expose:
+      - 3306
+      - 22
+    command: /usr/sbin/sshd -D
+    container_name: pm2
+    networks:
+      app_net:
+        ipv4_address: ${PM2_NODE_IP}
+
+  jupyter:
+    image: mariadb/columnstore_jupyter:latest
+    command: start-notebook.sh --NotebookApp.password='sha1:817af87d3fe5:febd7d6959b12ee6839a26d56f8f54c88922e9c2' 
+    hostname: jupyter
+    depends_on:
+      - columnstore
+      - mariadb-cs-pm2
+      - mariadb-cs-pm1
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./common:/usr/local/mariadb/columnstore/etc/
+    container_name: jupyter
+    networks:
+      app_net:
+        ipv4_address: ${JU_NODE_IP}
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: ${SUBNET}
