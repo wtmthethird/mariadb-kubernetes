@@ -5,7 +5,7 @@ services:
     build:
       context: ./um/.
     depends_on:
-      - columnstore
+      - mariadb-cs-um
       - mariadb-cs-pm2
     environment:
       - UM_NODE_IP=${UM_NODE_IP}
@@ -28,8 +28,8 @@ services:
         ipv4_address: ${PM2_NODE_IP}
 
 
-  columnstore:
-    hostname: columnstore
+  mariadb-cs-um:
+    hostname: mariadb-cs-pm2
     build:
       context: ./um/.
     expose:
@@ -47,7 +47,7 @@ services:
     build:
       context: ./prometheus/.
     depends_on:
-      - columnstore
+      - mariadb-cs-um
       - mariadb-cs-pm2
       - mariadb-cs-pm1
     expose:
