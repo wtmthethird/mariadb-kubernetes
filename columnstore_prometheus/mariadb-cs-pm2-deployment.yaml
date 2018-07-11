@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.7.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: mariadb-cs-pm2
+  name: mariadb-cs-pm2
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: mariadb-cs-pm2
+    spec:
+      hostname: mariadb-cs-pm2
+      containers:
+      - args: ["./entrypoint2.sh"]
+        image: alphatoxic/mariadb-kubernetes:columnstore-node-exporter
+        name: pm2
+        resources: {}
+      restartPolicy: Always
+status: {}
