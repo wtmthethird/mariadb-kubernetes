@@ -18,13 +18,16 @@ spec:
         io.kompose.service: mariadb-cs-um
     spec:
       hostname: mariadb-cs-um
+
       containers:
       - name: um
         image: alphatoxic/mariadb-kubernetes:latest
         args: ["./entrypoint2.sh"]
         resources: {}
-      - name: node-explorer
+
+      - name: node-exporter
         image: prom/node-exporter:latest
         resources: {}
+
       restartPolicy: Always
 status: {}
