@@ -19,9 +19,12 @@ spec:
     spec:
       hostname: mariadb-cs-pm1
       containers:
-      - args: ["./entrypoint.sh"]
-        image: alphatoxic/mariadb-kubernetes:columnstore-node-exporter
-        name: pm1
+      - name: pm1
+        image: alphatoxic/mariadb-kubernetes:latest
+        args: ["./entrypoint.sh"]
+        resources: {}
+      - name: node-explorer
+        image: prom/node-exporter:latest
         resources: {}
       restartPolicy: Always
 status: {}

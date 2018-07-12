@@ -19,13 +19,12 @@ spec:
     spec:
       hostname: mariadb-cs-um
       containers:
-      - args: ["./entrypoint2.sh"]
-        env:
-        ports:
-        - containerPort: 22
-        - containerPort: 3306
-        image: alphatoxic/mariadb-kubernetes:columnstore-node-exporter
-        name: um
+      - name: um
+        image: alphatoxic/mariadb-kubernetes:latest
+        args: ["./entrypoint2.sh"]
+        resources: {}
+      - name: node-explorer
+        image: prom/node-exporter:latest
         resources: {}
       restartPolicy: Always
 status: {}
