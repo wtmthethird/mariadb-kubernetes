@@ -19,8 +19,17 @@ spec:
     spec:
       hostname: prometheus
       containers:
-      - image: alphatoxic/mariadb-kubernetes:prometheus
+      - image: prom/prometheus:latest
         name: prometheus
         resources: {}
+        volumeMounts:
+        - name: prometheus-config-vol
+          mountPath: /etc/prometheus
+
+      volumes:
+        - name: prometheus-config-vol
+          configMap:
+            name: prometheus-config
+
       restartPolicy: Always
 status: {}
