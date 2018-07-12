@@ -3,12 +3,6 @@ FROM mariadb/columnstore_base:latest
 # needed to run some SQL through ssh
 RUN yum install -y openssh-clients openssh-server
 
-# install prometheus node exporter
-RUN curl -LO "https://github.com/prometheus/node_exporter/releases/download/v0.16.0/node_exporter-0.16.0.linux-amd64.tar.gz" \
-    && tar -xvzf node_exporter-0.16.0.linux-amd64.tar.gz \
-    && mv node_exporter-0.16.0.linux-amd64 node_exporter \
-    && rm -rf node_exporter-0.16.0.linux-amd64.tar.gz
-
 COPY entrypoint.sh entrypoint.sh
 COPY entrypoint2.sh entrypoint2.sh
 COPY postCfg2.sh /install/
