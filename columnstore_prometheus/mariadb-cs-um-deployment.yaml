@@ -23,11 +23,30 @@ spec:
       - name: um
         image: alphatoxic/mariadb-kubernetes:latest
         args: ["./entrypoint2.sh"]
+        volumeMounts:
+        - name: shared-data-log
+          mountPath: /var/log/mariadb/columnstore
         resources: {}
 
       - name: node-exporter
         image: prom/node-exporter:latest
         resources: {}
+
+      - name: fluentd
+        image: fluent/fluentd:latest
+        resources: {}
+        volumeMounts:
+        - name: fluentd-config-vol
+          mountPath: /fluentd/etc/
+        - name: shared-data-log
+          mountPath: /var/log/mariadb/columnstore
+
+      volumes:
+        - name: fluentd-config-vol
+          configMap:
+            name: fluentd-config
+        - name: shared-data-log
+          emptyDir: {}
 
       restartPolicy: Always
 status: {}
