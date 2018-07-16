@@ -1,0 +1,28 @@
+version: '3'
+services:
+  galera1:
+    hostname: galera1
+    build:
+      context: ./galera/
+    command: ./entrypoint.sh
+    container_name: galera1
+    environment:
+      - MAIN_NODE=true
+
+  galera2:
+    hostname: galera2
+    build:
+      context: ./galera/
+    command: ./entrypoint.sh
+    container_name: galera2
+    depends_on:
+      - galera1
+
+  galera3:
+    hostname: galera3
+    build:
+      context: ./galera/
+    command: ./entrypoint.sh
+    container_name: galera3
+    depends_on:
+      - galera1
