@@ -1,0 +1,43 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.7.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: galera1
+  name: galera1
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: galera1
+    spec:
+      hostname: galera1
+      containers:
+      - image: alphatoxic/mariadb-kubernetes:galera_latest
+        name: galera1
+        args: ["./entrypoint.sh"]
+        resources: {}
+        env:
+        - name: MAIN_NODE
+          value: "true"
+
+      - name: node-exporter
+        image: prom/node-exporter:latest
+        resources: {}
+
+      - name: mysqld-exporter
+        image: prom/mysqld-exporter:latest
+        env:
+        - name: DATA_SOURCE_NAME
+          value: 'root@(galera3:3306)/'
+        resources: {}
+
+      restartPolicy: Always
+
+status: {}
