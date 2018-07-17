@@ -19,11 +19,5 @@ RUN mkdir -p /root/.ssh \
 COPY entrypoint.sh entrypoint.sh
 RUN chmod +x entrypoint.sh
 
+# COPY my.cnf /etc/mysql/my.cnf
 COPY 50-server.cnf /etc/mysql/mariadb.conf.d/
-
-# make sure log files have the correct permissions for fluentd to read
-RUN touch /var/log/mysql/slow-query.log \
-    && chmod 666 /var/log/mysql/slow-query.log \
-    && touch /var/log/mysql/error.log \
-    && chmod 666 /var/log/mysql/error.log
-
