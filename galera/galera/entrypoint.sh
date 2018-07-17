@@ -2,15 +2,12 @@
 
 /etc/init.d/ssh start
 
-# service mysql stop
-
 if [ "$MAIN_NODE" = true ] ; then
-    service mysql bootstrap
-    mysql -vvv -Bse  "set sql_mode=NO_ENGINE_SUBSTITUTION; GRANT ALL ON *.* to root@'%';FLUSH PRIVILEGES;"
-    echo MAIN NODE INITIALIZED
+    service mysql start --wsrep-new-cluster
+    mysql -vvv -Bse "set sql_mode=NO_ENGINE_SUBSTITUTION; GRANT ALL ON *.* to root@'%';FLUSH PRIVILEGES;"
+    mysql -vvv -Bse "alter user 'root'@'%' identified by '${MYSQL_PASS}'; FLUSH PRIVILEGES;"
 else
     service mysql start
-    echo SECONDARY NODE INITIALIZED
 fi
 
 # don't exit the process

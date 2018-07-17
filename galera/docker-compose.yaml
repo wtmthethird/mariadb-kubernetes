@@ -8,6 +8,7 @@ services:
     container_name: galera1
     environment:
       - MAIN_NODE=true
+      - MYSQL_PASS=${MYSQL_PASS}
 
   galera2:
     hostname: galera2
@@ -17,6 +18,8 @@ services:
     container_name: galera2
     depends_on:
       - galera1
+    environment:
+      - MYSQL_PASS=${MYSQL_PASS}
 
   galera3:
     hostname: galera3
@@ -26,3 +29,19 @@ services:
     container_name: galera3
     depends_on:
       - galera1
+    environment:
+      - MYSQL_PASS=${MYSQL_PASS}
+
+  maxscale:
+    hostname: maxscale
+    image: mariadb/maxscale:latest
+    command: maxscale -d -U maxscale --configdir=/etc/maxscale-cfg
+    volumes:
+      - "./maxscale:/etc/maxscale-cfg/"
+    container_name: maxscale
+    environment:
+      - MYSQL_PASS=${MYSQL_PASS}
+    depends_on:
+      - galera1
+      - galera2
+      - galera3
