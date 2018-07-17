@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.7.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: maxscale
+  name: maxscale
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: maxscale
+    spec:
+      hostname: maxscale
+      containers:
+      - image: mariadb/maxscale:latest
+        name: maxscale
+        resources: {}
+        command: ["maxscale"]
+        args: ["-d", "-U", "maxscale", "--configdir=/etc/maxscale-cfg"]
+        env:
+        - name: MYSQL_PASS
+          value: "pass"
+        volumeMounts:
+        - name: maxscale-config
+          mountPath: /etc/maxscale-cfg
+
+      volumes:
+        - name: maxscale-config
+          configMap:
+            name: maxscale-config
+
+      restartPolicy: Always
+status: {}

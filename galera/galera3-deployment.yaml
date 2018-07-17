@@ -32,7 +32,7 @@ spec:
         image: prom/mysqld-exporter:latest
         env:
         - name: DATA_SOURCE_NAME
-          value: 'root@(galera3:3306)/'
+          value: 'root:pass@(galera1:3306)/'
         resources: {}
 
       restartPolicy: Always
