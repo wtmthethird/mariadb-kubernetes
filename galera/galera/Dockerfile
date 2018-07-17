@@ -4,10 +4,12 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update \
     && apt-get install software-properties-common -y \
     && apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8 \
-    && add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://mirror.host.ag/mariadb/repo/10.3/ubuntu bionic main'
-
-RUN apt-get update \
-    && apt-get install mariadb-server mariadb-client rsync lsof openssh-client openssh-server -y
+    && add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://mirror.host.ag/mariadb/repo/10.3/ubuntu bionic main' \
+    && apt-get update \
+    && apt-get install mariadb-server mariadb-client rsync lsof openssh-client openssh-server -y \
+    && apt-get remove --purge software-properties-common -y \
+    && apt-get autoremove --purge -y \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /root/.ssh \
     && cp /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa \
