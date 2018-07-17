@@ -18,8 +18,6 @@ services:
     container_name: galera2
     depends_on:
       - galera1
-    environment:
-      - MYSQL_PASS=${MYSQL_PASS}
 
   galera3:
     hostname: galera3
@@ -29,8 +27,6 @@ services:
     container_name: galera3
     depends_on:
       - galera1
-    environment:
-      - MYSQL_PASS=${MYSQL_PASS}
 
   maxscale:
     hostname: maxscale
