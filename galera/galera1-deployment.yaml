@@ -28,6 +28,9 @@ spec:
           value: "true"
         - name: MYSQL_PASS
           value: "pass"
+        volumeMounts:
+        - name: shared-data-log
+          mountPath: /var/log/mysql
 
       - name: node-exporter
         image: prom/node-exporter:latest
@@ -39,6 +42,22 @@ spec:
         - name: DATA_SOURCE_NAME
           value: 'root:pass@(galera1:3306)/'
         resources: {}
+
+      - name: fluentd
+        image: fluent/fluentd:latest
+        resources: {}
+        volumeMounts:
+        - name: fluentd-config-vol
+          mountPath: /fluentd/etc/
+        - name: shared-data-log
+          mountPath: /var/log/mysql
+
+      volumes:
+      - name: fluentd-config-vol
+        configMap:
+          name: fluentd-config-tx
+      - name: shared-data-log
+        emptyDir: {}
 
       restartPolicy: Always
 
