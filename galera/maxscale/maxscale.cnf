@@ -78,18 +78,18 @@ port=6603
 
 [server1]
 type=server
-address=galera1
+address=galera-0
 port=3306
 protocol=mariadbbackend
 
 [server2]
 type=server
-address=galera2
+address=galera-1
 port=3306
 protocol=mariadbbackend
 
 [server3]
 type=server
-address=galera3
+address=galera-2
 port=3306
 protocol=mariadbbackend

@@ -23,7 +23,7 @@ wsrep_on=ON
 wsrep_provider=/usr/lib/libgalera_smm.so
 wsrep_provider_options="gcache.size=300M; gcache.page_size=300M"
 wsrep_cluster_name="example_cluster"
-wsrep_cluster_address="gcomm://galera1,galera2,galera3"
+wsrep_cluster_address="gcomm://galera-0,galera-1,galera-2"
 wsrep_sst_method=rsync
 
 #

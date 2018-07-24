@@ -1,32 +1,32 @@
 version: '3'
 services:
-  galera1:
-    hostname: galera1
+  galera-0:
+    hostname: galera-0
     build:
       context: ./galera/
     command: ./entrypoint.sh
-    container_name: galera1
+    container_name: galera-0
     environment:
       - MAIN_NODE=true
       - MYSQL_PASS=${MYSQL_PASS}
 
-  galera2:
-    hostname: galera2
+  galera-1:
+    hostname: galera-1
     build:
       context: ./galera/
     command: ./entrypoint.sh
-    container_name: galera2
+    container_name: galera-1
     depends_on:
-      - galera1
+      - galera-0
 
-  galera3:
-    hostname: galera3
+  galera-2:
+    hostname: galera-2
     build:
       context: ./galera/
     command: ./entrypoint.sh
-    container_name: galera3
+    container_name: galera-2
     depends_on:
-      - galera1
+      - galera-0
 
   maxscale:
     hostname: maxscale
@@ -38,6 +38,6 @@ services:
     environment:
       - MYSQL_PASS=${MYSQL_PASS}
     depends_on:
-      - galera1
-      - galera2
-      - galera3
+      - galera-0
+      - galera-1
+      - galera-2
