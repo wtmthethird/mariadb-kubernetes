@@ -1,0 +1,71 @@
+# Headless service for stable DNS entries for StatefulSet members
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-cluster
+  labels:
+    app: mariadb-galera-cluster
+spec:
+  ports:
+  - name: mariadb
+    port: 3306
+    targetPort: 3306
+  clusterIP: None
+  selector:
+    app: mariadb-galera-cluster
+---
+# a StatefulSet for the galera cluster
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: galera
+spec:
+  selector:
+    matchLabels:
+      app: mariadb-galera-cluster
+  serviceName: mariadb-cluster
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: mariadb-galera-cluster
+    spec:
+      containers:
+      - command:
+        - bash
+        - ./entrypoint.sh
+        env:
+        - name: MYSQL_PASS
+          value: "pass"
+        image: alphatoxic/mariadb-kubernetes@sha256:8f9050ce6715fc05a8a769e5c0b3f06a7407aacb18bddbebf4359a826fc2b5fc
+        name: galera
+        ports:
+        - containerPort: 3306
+        - containerPort: 22
+        - containerPort: 4567
+        - containerPort: 4568
+        - containerPort: 4444
+        - containerPort: 9100
+        resources: {}
+        volumeMounts:
+        - name: mariadb-galera-config
+          mountPath: /etc/mysql/mariadb.conf.d/50-server.cnf
+          subPath: 50-server.cnf # mount single file instead of whole dir
+        livenessProbe:
+          exec:
+            command: ["mysqladmin", "ping"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            # Check we can execute queries over TCP (skip-networking is off).
+            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          timeoutSeconds: 1
+      restartPolicy: Always
+      volumes:
+      - name: mariadb-galera-config
+        configMap:
+          name: mariadb-galera-config

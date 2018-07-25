@@ -23,7 +23,10 @@ wsrep_on=ON
 wsrep_provider=/usr/lib/libgalera_smm.so
 wsrep_provider_options="gcache.size=300M; gcache.page_size=300M"
 wsrep_cluster_name="example_cluster"
-wsrep_cluster_address="gcomm://galera-0,galera-1,galera-2"
+; for docker-compose
+; wsrep_cluster_address="gcomm://galera-0,galera-1,galera-2"
+; for kubernetes
+wsrep_cluster_address="gcomm://galera-0.mariadb-cluster,galera-1.mariadb-cluster,galera-2.mariadb-cluster"
 wsrep_sst_method=rsync
 
 #
