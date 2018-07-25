@@ -39,6 +39,12 @@ servers=server1,server2,server3
 user=root
 passwd=$MYSQL_PASS
 
+[MaxInfo]
+type=service
+router=maxinfo
+user=monitor
+passwd=monitor
+
 [Debug Interface]
 type=service
 router=debugcli
@@ -47,34 +53,26 @@ router=debugcli
 type=service
 router=cli
 
-[RWlistener]
-type=listener
-service=RW
-protocol=mariadbclient
-address=maxscale
-port=3307
+# Listener definitions for the services
+# Listeners represent the ports the services will listen on.
 
-[RRlistener]
+[Read-Only-Listener]
 type=listener
 service=RR
 protocol=mariadbclient
-address=maxscale
+port=3307
+
+[Read-Write-Listener]
+type=listener
+service=RW
+protocol=mariadbclient
 port=3308
 
-[Debug Listener]
+[MaxInfo JSON Listener]
 type=listener
-service=Debug Interface
-protocol=telnetd
-address=127.0.0.1
-port=4442
-
-[CLI Listener]
-type=listener
-service=CLI
-protocol=maxscaled
-address=127.0.0.1
-port=6603
-
+service=MaxInfo
+protocol=HTTPD
+port=8003
 
 [server1]
 type=server

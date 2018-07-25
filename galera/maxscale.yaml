@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-maxscale
+  labels:
+    app: mariadb-masterslave-cluster
+spec:
+  ports:
+  - name: maxscale-readwrite
+    port: 3307
+    targetPort: 3307
+  - name: maxscale-read
+    port: 3308
+    targetPort: 3308
+  selector:
+    app: mariadb-masterslave-cluster
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb-maxscale
+spec:
+  selector:
+    matchLabels:
+      app: mariadb-masterslave-cluster
+  serviceName: mariadb-cluster
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mariadb-masterslave-cluster
+    spec:
+      containers:
+      - args:
+        - maxscale
+        - -d
+        - -U
+        - maxscale
+        - --configdir=/etc/maxscale-cfg
+        image: mariadb/maxscale:latest
+        name: maxscale
+        env:
+        - name: MYSQL_PASS
+          value: "pass"
+        ports:
+        - containerPort: 3307
+        - containerPort: 3308
+        resources: {}
+        volumeMounts:
+        - mountPath: /etc/maxscale-cfg
+          name: maxscale-configmap-vol
+      restartPolicy: Always
+      volumes:
+      - name: maxscale-configmap-vol
+        configMap:
+          name: mariadb-maxscale-config
