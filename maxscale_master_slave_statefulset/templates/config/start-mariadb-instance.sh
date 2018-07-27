@@ -4,8 +4,6 @@ set -ex
 [[ $(hostname) =~ -([0-9]+)$ ]] || exit 1
 server_id=${BASH_REMATCH[1]}
 
-ls -l /var/lib/mysql
-          
 if [[ $server_id -eq 0 ]]; then
    if [[ ! -d /var/lib/mysql/mysql ]]; then
       # first run on master, ensure maxscale user is initialized

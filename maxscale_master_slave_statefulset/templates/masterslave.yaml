@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mariadb-cluster
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
   labels:
-    app: mariadb-masterslave-cluster
+    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
 spec:
   ports:
   - name: mariadb
@@ -12,24 +12,39 @@ spec:
     targetPort: 3306
   clusterIP: None
   selector:
-    app: mariadb-masterslave-cluster
+    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
 ---   
 # a StatefulSet for the master/slave cluster 
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mariadb-masterslave
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-ms
 spec:
   selector:
     matchLabels:
-      app: mariadb-masterslave-cluster
-  serviceName: mariadb-cluster
+      mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
   replicas: 3
   template:
     metadata:
       labels:
-        app: mariadb-masterslave-cluster
+        mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
     spec:
+      initContainers:
+      - name: init-masterslave
+        image: mariadb:10.3
+        command:
+          - bash
+          - /mnt/config-template/init-configurations.sh
+          - /mnt/config-map
+        volumeMounts:
+          - mountPath: /mnt/secrets
+            name: mariadb-secrets-vol
+            readOnly: true
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
+          - mountPath: /mnt/config-map
+            name: mariadb-config-vol
       containers:
       - command:
         - bash
@@ -44,12 +59,12 @@ spec:
         - containerPort: 3306
         resources: {}
         volumeMounts:
-        - name: mariadb-config-vol
+        - name: mariadb-entrypoint-vol
           mountPath: /docker-entrypoint-initdb.d
-        - name: mariadb-configmap-vol
+        - name: mariadb-config-vol
           mountPath: /mnt/config-map
         # a permanent volume for data storage
-        - name: mariadb-data-vol
+        - name: data
           mountPath: /var/lib/mysql
           subPath: mysql
         livenessProbe:
@@ -67,17 +82,20 @@ spec:
           timeoutSeconds: 1
       restartPolicy: Always
       volumes:
+      - name: mariadb-entrypoint-vol 
+        emptyDir: {}
       - name: mariadb-config-vol
         emptyDir: {}
-      - name: maxscale-config-vol
-        emptyDir: {}
-      - name: mariadb-configmap-vol
+      - name: mariadb-configtemplate-vol
         configMap:
-          name: mariadb-masterslave-config
+          name: mariadb-config
+      - name: mariadb-secrets-vol
+        secret:
+          secretName: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-secret
   # ensures persistent volumes end up on the same pod
   volumeClaimTemplates:
   - metadata:
-      name: mariadb-data-vol
+      name: data
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:

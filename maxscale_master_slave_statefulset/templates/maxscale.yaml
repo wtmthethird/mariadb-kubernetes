@@ -1,35 +1,51 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mariadb-maxscale
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb
   labels:
-    app: mariadb-masterslave-cluster
+    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
 spec:
   ports:
   - name: maxscale-readwrite
     port: 4006
     targetPort: 4006
-  - name: maxscale-read
+  - name: maxscale-readonly
     port: 4008
     targetPort: 4008
   selector:
-    app: mariadb-masterslave-cluster
+    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mariadb-maxscale
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-mxs
 spec:
   selector:
     matchLabels:
-      app: mariadb-masterslave-cluster
-  serviceName: mariadb-cluster
+      mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
   replicas: 1
   template:
     metadata:
       labels:
-        app: mariadb-masterslave-cluster
+        mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
     spec:
+      initContainers:
+      - name: init-maxscale
+        image: mariadb:10.3
+        command:
+          - bash
+          - /mnt/config-template/init-configurations.sh
+          - /etc/maxscale-cfg
+          - "2"
+        volumeMounts:
+          - mountPath: /mnt/secrets
+            name: mariadb-secrets-vol
+            readOnly: true
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
+          - mountPath: /etc/maxscale-cfg
+            name: mariadb-config-vol
       containers:
       - args:
         - maxscale
@@ -45,9 +61,14 @@ spec:
         resources: {}
         volumeMounts:
         - mountPath: /etc/maxscale-cfg
-          name: maxscale-configmap-vol   
+          name: mariadb-config-vol
       restartPolicy: Always
       volumes:
-      - name: maxscale-configmap-vol
+      - name: mariadb-config-vol
+        emptyDir: {}
+      - name: mariadb-configtemplate-vol
         configMap:
-          name: mariadb-maxscale-config
+          name: mariadb-config
+      - name: mariadb-secrets-vol
+        secret:
+          secretName: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-secret
