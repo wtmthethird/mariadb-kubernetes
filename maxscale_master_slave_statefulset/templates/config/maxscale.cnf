@@ -13,19 +13,19 @@ socket=default
 
 [server1]
 type=server
-address=mariadb-masterslave-0.mariadb-cluster
+address={{APPLICATION}}-{{ENVIRONMENT}}-mdb-ms-0.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
 port=3306
 protocol=MariaDBBackend
 
 [server2]
 type=server
-address=mariadb-masterslave-1.mariadb-cluster
+address={{APPLICATION}}-{{ENVIRONMENT}}-mdb-ms-1.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
 port=3306
 protocol=MariaDBBackend
 
 [server3]
 type=server
-address=mariadb-masterslave-2.mariadb-cluster
+address={{APPLICATION}}-{{ENVIRONMENT}}-mdb-ms-2.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
 port=3306
 protocol=MariaDBBackend
 
@@ -38,8 +38,8 @@ protocol=MariaDBBackend
 type=monitor
 module=mariadbmon
 servers=server1,server2,server3
-user=maxuser
-passwd=maxpwd
+user={{REPLICATION_USER}}
+passwd={{REPLICATION_PASSWORD}}
 monitor_interval=2000
 auto_failover=true
 auto_rejoin=true
@@ -54,8 +54,8 @@ auto_rejoin=true
 type=service
 router=readconnroute
 servers=server1,server2,server3
-user=maxuser
-passwd=maxpwd
+user={{REPLICATION_USER}}
+passwd={{REPLICATION_PASSWORD}}
 router_options=slave
 
 # ReadWriteSplit documentation:
@@ -65,8 +65,8 @@ router_options=slave
 type=service
 router=readwritesplit
 servers=server1,server2,server3
-user=maxuser
-passwd=maxpwd
+user={{REPLICATION_USER}}
+passwd={{REPLICATION_PASSWORD}}
 master_failure_mode=error_on_write
 
 [MaxInfo]
