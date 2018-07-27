@@ -4,11 +4,7 @@ FROM mariadb/columnstore_base:latest
 RUN yum install -y openssh-clients openssh-server
 
 COPY entrypoint.sh entrypoint.sh
-COPY entrypoint2.sh entrypoint2.sh
-COPY postCfg2.sh /install/
-RUN chmod +x entrypoint.sh \
-    && chmod +x entrypoint2.sh \
-    && chmod +x /install/postCfg2.sh
+RUN chmod +x entrypoint.sh
 
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd

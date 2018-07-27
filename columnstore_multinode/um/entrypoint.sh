@@ -1,8 +1,26 @@
 #!/bin/bash
+set -ex
 
-# start the columnstore install
-/install/postCfg2.sh "2\n1\n\n\ncolumnstore-1\n\n1\nmariadb-cs-um\n\n\n2\nmariadb-cs-pm1\n\n\n\nmariadb-cs-pm2\n\n\n2\n\n\n"
+# start ssh daemon
+/usr/sbin/sshd
 
-# start the columnstore install
-# for docker-compose
-# /install/postCfg2.sh "2\n1\n\n\ncolumnstore-1\n\n1\nmariadb-cs-um\n${UM_NODE_IP}\n\n2\nmariadb-cs-pm1\n${PM1_NODE_IP}\n\n\nmariadb-cs-pm2\n${PM2_NODE_IP}\n\n2\n\n\n"
+[[ $(hostname) =~ -([0-9]+)$ ]] || exit 1
+server_id=${BASH_REMATCH[1]}
+
+if [[ $server_id -eq 2 ]]; then
+    sleep 10
+    export USER=root
+
+    /usr/sbin/sshd
+
+    # postConfigure with input passed in
+    /bin/echo -e "2\n1\n\n\ncolumnstore-1\n\n1\ncolumnstore-0.mariadb-columnstore\n\n\n2\ncolumnstore-2.mariadb-columnstore\n\n\n\ncolumnstore-1.mariadb-columnstore\n\n\n2\n\n\n" | /usr/local/mariadb/columnstore/bin/postConfigure -n
+
+    # update root user to allow external connection, need to turn off NO_AUTO_CREATE_USER. 
+    ssh -vvv -o "StrictHostKeyChecking=no" -l root columnstore-0.mariadb-columnstore '/usr/local/mariadb/columnstore/mysql/bin/mysql --defaults-file=/usr/local/mariadb/columnstore/mysql/my.cnf -uroot -vvv -Bse "set sql_mode=NO_ENGINE_SUBSTITUTION;GRANT ALL ON *.* to root@'"'"'%'"'"';FLUSH PRIVILEGES;"'
+else
+    # start the columnsotre process
+    /usr/local/mariadb/columnstore/bin/columnstore start
+fi
+
+tail -f /dev/null
