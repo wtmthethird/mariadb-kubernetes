@@ -15,9 +15,3 @@ RUN mkdir -p /root/.ssh \
     && cp /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa \
     && cp /etc/ssh/ssh_host_rsa_key.pub /root/.ssh/id_rsa.pub \
     && cp /etc/ssh/ssh_host_rsa_key.pub /root/.ssh/authorized_keys
-
-COPY entrypoint.sh entrypoint.sh
-RUN chmod +x entrypoint.sh
-
-# COPY my.cnf /etc/mysql/my.cnf
-COPY 50-server.cnf /etc/mysql/mariadb.conf.d/

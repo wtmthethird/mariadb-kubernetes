@@ -1,0 +1,145 @@
+# Headless service for stable DNS entries for StatefulSet members
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera
+  labels:
+    app: {{APPLICATION}}-{{ENVIRONMENT}}
+spec:
+  ports:
+  - name: mariadb
+    port: 3306
+    targetPort: 3306
+  clusterIP: None
+  selector:
+    app: {{APPLICATION}}-{{ENVIRONMENT}}
+---
+# a StatefulSet for the galera cluster
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-galera
+spec:
+  selector:
+    matchLabels:
+      app: {{APPLICATION}}-{{ENVIRONMENT}}
+  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: {{APPLICATION}}-{{ENVIRONMENT}}
+    spec:
+      initContainers:
+      - name: init-galera1
+        image: mariadb:10.3
+        command:
+          - bash
+          - /mnt/config-template/init-configurations.sh
+          - /etc/parsed-config
+        volumeMounts:
+          - mountPath: /mnt/secrets
+            name: mariadb-secrets-vol
+            readOnly: true
+          - mountPath: /mnt/config-template
+            name: mariadb-galera-configmap-vol
+          - mountPath: /etc/parsed-config
+            name: mariadb-config-vol1
+
+      - name: init-galera2
+        image: mariadb:10.3
+        command:
+          - bash
+          - /mnt/config-template/init-configurations.sh
+          - /etc/parsed-config
+        volumeMounts:
+          - mountPath: /mnt/secrets
+            name: mariadb-secrets-vol
+            readOnly: true
+          - mountPath: /mnt/config-template
+            name: mariadb-galera-configmap-vol
+          - mountPath: /etc/parsed-config
+            name: mariadb-config-vol2
+
+      containers:
+      - name: galera
+        image: alphatoxic/mariadb-kubernetes@sha256:5c25b68d97108c9269249a7132fe524e25b6ff7ce53ee4a36bd6410a906cb22d
+        command:
+        - bash
+        - ./entrypoint.sh
+        ports:
+        - containerPort: 3306
+        - containerPort: 22
+        - containerPort: 4567
+        - containerPort: 4568
+        - containerPort: 4444
+        - containerPort: 9100
+        resources: {}
+        volumeMounts:
+        - name: mariadb-galera-data-vol
+          mountPath: /var/lib/mysql
+          subPath: mysql
+        - name: shared-data-log
+          mountPath: /var/log/mysql
+        - name: mariadb-config-vol1
+          mountPath: /entrypoint.sh
+          subPath: entrypoint.sh
+        - name: mariadb-config-vol2
+          mountPath: /etc/mysql/mariadb.conf.d/50-server.cnf
+          subPath: 50-server.cnf
+
+        livenessProbe:
+          exec:
+            command: ["mysqladmin", "ping"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            # Check we can execute queries over TCP (skip-networking is off).
+            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          timeoutSeconds: 1
+
+      - name: mysqld-exporter
+        image: prom/mysqld-exporter:latest
+        env:
+        - name: DATA_SOURCE_NAME
+          value: '{{ADMIN_USERNAME}}:{{ADMIN_PASSWORD}}@(localhost:3306)/'
+        resources: {}
+
+      - name: fluentd
+        image: fluent/fluentd:latest
+        resources: {}
+        volumeMounts:
+        - name: mariadb-config-vol1
+          mountPath: /fluentd/etc/fluent.conf
+          subPath: fluent.conf
+        - name: shared-data-log
+          mountPath: /var/log/mysql
+
+      volumes:
+      - name: shared-data-log
+        emptyDir: {}
+      - name: mariadb-galera-configmap-vol
+        configMap:
+          name: mariadb-galera-config
+      - name: mariadb-config-vol1
+        emptyDir: {}
+      - name: mariadb-config-vol2
+        emptyDir: {}
+      - name: mariadb-secrets-vol
+        secret:
+          secretName: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-secret
+
+      restartPolicy: Always
+
+  volumeClaimTemplates:
+  - metadata:
+      name: mariadb-galera-data-vol
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi

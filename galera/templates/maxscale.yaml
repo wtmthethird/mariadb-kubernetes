@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-maxscale
+  labels:
+    app: {{APPLICATION}}-{{ENVIRONMENT}}
+spec:
+  ports:
+  - name: maxscale-readwrite
+    port: 3307
+    targetPort: 3307
+  - name: maxscale-read
+    port: 3308
+    targetPort: 3308
+  selector:
+    app: {{APPLICATION}}-{{ENVIRONMENT}}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-maxscale
+spec:
+  selector:
+    matchLabels:
+      app: {{APPLICATION}}-{{ENVIRONMENT}}
+  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-maxscale
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{APPLICATION}}-{{ENVIRONMENT}}
+    spec:
+      initContainers:
+      - name: init-maxscale
+        image: mariadb:10.3
+        command:
+          - bash
+          - /mnt/config-template/init-configurations.sh
+          - /etc/maxscale-cfg
+          - "2"
+        volumeMounts:
+          - mountPath: /mnt/secrets
+            name: mariadb-secrets-vol
+            readOnly: true
+          - mountPath: /mnt/config-template
+            name: maxscale-configmap-vol
+          - mountPath: /etc/maxscale-cfg
+            name: mariadb-config-vol
+      
+      containers:
+      - args:
+        - maxscale
+        - -d
+        - -U
+        - maxscale
+        - --configdir=/etc/maxscale-cfg
+        image: mariadb/maxscale:latest
+        name: maxscale
+        ports:
+        - containerPort: 3307
+        - containerPort: 3308
+        resources: {}
+        volumeMounts:
+        - mountPath: /etc/maxscale-cfg/maxscale.cnf
+          name: mariadb-config-vol
+          subPath: maxscale.cnf
+      restartPolicy: Always
+      volumes:
+      - name: maxscale-configmap-vol
+        configMap:
+          name: mariadb-galera-config
+      - name: mariadb-config-vol
+        emptyDir: {}
+      - name: mariadb-secrets-vol
+        secret:
+          secretName: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-secret
+
+

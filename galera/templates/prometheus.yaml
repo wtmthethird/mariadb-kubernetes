@@ -36,7 +36,8 @@ spec:
         resources: {}
         volumeMounts:
         - name: prometheus-config-vol
-          mountPath: /etc/prometheus
+          mountPath: /etc/prometheus/prometheus.yaml
+          subPath: prometheus.yaml
 
       restartPolicy: Always
 

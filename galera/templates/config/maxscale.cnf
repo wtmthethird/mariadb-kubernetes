@@ -6,8 +6,8 @@ substitute_variables=true
 type=monitor
 module=galeramon
 servers=server1,server2,server3
-user=root
-passwd=$MYSQL_PASS
+user={{REPLICATION_USERNAME}}
+passwd={{REPLICATION_PASSWORD}}
 monitor_interval=10000
 disable_master_failback=1
 
@@ -26,8 +26,8 @@ replace=select
 type=service
 router=readwritesplit
 servers=server1,server2,server3
-user=root
-passwd=$MYSQL_PASS
+user={{REPLICATION_USERNAME}}
+passwd={{REPLICATION_PASSWORD}}
 max_slave_connections=100%
 router_options=slave_selection_criteria=LEAST_CURRENT_OPERATIONS
 
@@ -36,8 +36,8 @@ type=service
 router=readconnroute
 router_options=synced
 servers=server1,server2,server3
-user=root
-passwd=$MYSQL_PASS
+user={{REPLICATION_USERNAME}}
+passwd={{REPLICATION_PASSWORD}}
 
 [MaxInfo]
 type=service
@@ -76,18 +76,18 @@ port=8003
 
 [server1]
 type=server
-address=galera-0.mariadb-cluster
+address={{APPLICATION}}-{{ENVIRONMENT}}-galera-0.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera
 port=3306
 protocol=mariadbbackend
 
 [server2]
 type=server
-address=galera-1.mariadb-cluster
+address={{APPLICATION}}-{{ENVIRONMENT}}-galera-1.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera
 port=3306
 protocol=mariadbbackend
 
 [server3]
 type=server
-address=galera-2.mariadb-cluster
+address={{APPLICATION}}-{{ENVIRONMENT}}-galera-2.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera
 port=3306
 protocol=mariadbbackend

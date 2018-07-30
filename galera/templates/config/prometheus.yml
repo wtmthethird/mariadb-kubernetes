@@ -19,12 +19,12 @@ rule_files:
 scrape_configs:
   - job_name: 'galera0-mysql'
     static_configs:
-    - targets: ['galera-0.mariadb-cluster:9104']
+    - targets: ['{{APPLICATION}}-{{ENVIRONMENT}}-galera-0.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera:9104']
 
   - job_name: 'galera1-mysql'
     static_configs:
-    - targets: ['galera-1.mariadb-cluster:9104']
+    - targets: ['{{APPLICATION}}-{{ENVIRONMENT}}-galera-1.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera:9104']
 
   - job_name: 'galera2-mysql'
     static_configs:
-    - targets: ['galera-2.mariadb-cluster:9104']
+    - targets: ['{{APPLICATION}}-{{ENVIRONMENT}}-galera-2.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera:9104']
