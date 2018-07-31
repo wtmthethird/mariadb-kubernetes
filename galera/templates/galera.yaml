@@ -78,8 +78,7 @@ spec:
         volumeMounts:
         - name: mariadb-galera-data-vol
           mountPath: /var/lib/mysql
-          subPath: mysql
-        - name: shared-data-log
+        - name: mariadb-galera-log-vol
           mountPath: /var/log/mysql
         - name: mariadb-config-vol1
           mountPath: /entrypoint.sh
@@ -116,7 +115,7 @@ spec:
         - name: mariadb-config-vol1
           mountPath: /fluentd/etc/fluent.conf
           subPath: fluent.conf
-        - name: shared-data-log
+        - name: mariadb-galera-log-vol
           mountPath: /var/log/mysql
 
       volumes:
@@ -138,6 +137,13 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: mariadb-galera-data-vol
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: mariadb-galera-log-vol
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:
