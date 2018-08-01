@@ -37,7 +37,7 @@ spec:
           - bash
           - /mnt/config-template/init-configurations.sh
           - /etc/maxscale-cfg
-          - "2"
+          - maxscale
         volumeMounts:
           - mountPath: /mnt/secrets
             name: mariadb-secrets-vol
