@@ -1,5 +1,8 @@
 [maxscale]
 threads=auto
+# new entries
+admin_enabled=true
+admin_host=0.0.0.0 
 
 [MaxAdmin-Service]
 type=service
@@ -11,24 +14,6 @@ service=MaxAdmin-Service
 protocol=maxscaled
 socket=default
 
-[server1]
-type=server
-address={{APPLICATION}}-{{ENVIRONMENT}}-mdb-ms-0.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
-port=3306
-protocol=MariaDBBackend
-
-[server2]
-type=server
-address={{APPLICATION}}-{{ENVIRONMENT}}-mdb-ms-1.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
-port=3306
-protocol=MariaDBBackend
-
-[server3]
-type=server
-address={{APPLICATION}}-{{ENVIRONMENT}}-mdb-ms-2.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
-port=3306
-protocol=MariaDBBackend
-
 # Monitor for the servers
 # This will keep MaxScale aware of the state of the servers.
 # MySQL Monitor documentation:
@@ -37,7 +22,6 @@ protocol=MariaDBBackend
 [MariaDB-Monitor]
 type=monitor
 module=mariadbmon
-servers=server1,server2,server3
 user={{REPLICATION_USER}}
 passwd={{REPLICATION_PASSWORD}}
 monitor_interval=2000
@@ -53,7 +37,6 @@ auto_rejoin=true
 [Read-Only-Service]
 type=service
 router=readconnroute
-servers=server1,server2,server3
 user={{REPLICATION_USER}}
 passwd={{REPLICATION_PASSWORD}}
 router_options=slave
@@ -64,7 +47,6 @@ router_options=slave
 [Read-Write-Service]
 type=service
 router=readwritesplit
-servers=server1,server2,server3
 user={{REPLICATION_USER}}
 passwd={{REPLICATION_PASSWORD}}
 master_failure_mode=error_on_write
