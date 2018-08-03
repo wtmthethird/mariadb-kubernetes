@@ -36,7 +36,6 @@ spec:
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
-          - /etc/maxscale-cfg
           - maxscale
         volumeMounts:
           - mountPath: /mnt/secrets
