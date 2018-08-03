@@ -155,6 +155,18 @@ spec:
         - name: columnstore-init
           mountPath: /entrypoint.sh
           subPath: entrypoint.sh
+        livenessProbe:
+          exec:
+            command: ["/bin/bash","-c","ps cax | grep ProcMon > /dev/null"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command: ["/bin/bash","-c","ps cax | grep ProcMon > /dev/null"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          timeoutSeconds: 1
 
       - name: fluentd
         image: fluent/fluentd:latest
