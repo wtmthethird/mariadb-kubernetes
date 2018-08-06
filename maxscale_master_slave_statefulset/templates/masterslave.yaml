@@ -41,6 +41,8 @@ spec:
           - mountPath: /mnt/secrets
             name: mariadb-secrets-vol
             readOnly: true
+          - name: mariadb-entrypoint-vol
+            mountPath: /docker-entrypoint-initdb.d
           - mountPath: /mnt/config-template
             name: mariadb-configtemplate-vol
           - mountPath: /mnt/config-map
