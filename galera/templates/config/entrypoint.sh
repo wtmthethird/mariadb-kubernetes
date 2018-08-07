@@ -30,10 +30,10 @@ if [[ $server_id -eq 0 ]]; then
         mysql -vvv -Bse "GRANT ALL ON *.* TO '{{REPLICATION_USERNAME}}'@'127.0.0.1' WITH GRANT OPTION;"
         mysql -vvv -Bse "GRANT ALL ON *.* TO '{{REPLICATION_USERNAME}}'@'%' WITH GRANT OPTION;"
 
-        mysql -vvv -Bse "CREATE USER '{{ADMIN_USER}}'@'127.0.0.1' IDENTIFIED BY '{{ADMIN_PASSWORD}}';"
-        mysql -vvv -Bse "CREATE USER '{{ADMIN_USER}}'@'%' IDENTIFIED BY '{{ADMIN_PASSWORD}}';"
-        mysql -vvv -Bse "GRANT ALL ON *.* TO '{{ADMIN_USER}}'@'127.0.0.1' WITH GRANT OPTION;"
-        mysql -vvv -Bse "GRANT ALL ON *.* TO '{{ADMIN_USER}}'@'%' WITH GRANT OPTION;"
+        mysql -vvv -Bse "CREATE USER '{{ADMIN_USERNAME}}'@'127.0.0.1' IDENTIFIED BY '{{ADMIN_PASSWORD}}';"
+        mysql -vvv -Bse "CREATE USER '{{ADMIN_USERNAME}}'@'%' IDENTIFIED BY '{{ADMIN_PASSWORD}}';"
+        mysql -vvv -Bse "GRANT ALL ON *.* TO '{{ADMIN_USERNAME}}'@'127.0.0.1' WITH GRANT OPTION;"
+        mysql -vvv -Bse "GRANT ALL ON *.* TO '{{ADMIN_USERNAME}}'@'%' WITH GRANT OPTION;"
 
         mysql -vvv -Bse "FLUSH PRIVILEGES;"
     else
