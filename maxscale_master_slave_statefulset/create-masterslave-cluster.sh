@@ -126,5 +126,5 @@ if [ "$DRY_RUN" != "" ]; then
 fi
 
 # cleanup temporary files
-rm -R -f "$TEMPLATE"
+rm -R -f "$TEMPDIR"
 # done

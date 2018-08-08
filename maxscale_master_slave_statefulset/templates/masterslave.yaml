@@ -36,7 +36,7 @@ spec:
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
-          - /mnt/config-map
+          - masterslave
         volumeMounts:
           - mountPath: /mnt/secrets
             name: mariadb-secrets-vol
