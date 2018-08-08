@@ -23,7 +23,7 @@ minikube start --vm-driver hyperv --hyperv-virtual-switch "ExternalSwitch"
 ```
 
 After installation the kubernetes dashboard application may be accessed by running:
-````sh
+```sh
 minikube dashboard
 ```
 
