@@ -1,0 +1,103 @@
+# Headless service for stable DNS entries for StatefulSet members
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
+  labels:
+    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+spec:
+  ports:
+  - name: mariadb
+    port: 3306
+    targetPort: 3306
+  clusterIP: None
+  selector:
+    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+---   
+# a StatefulSet for the master/slave cluster 
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-ms
+spec:
+  selector:
+    matchLabels:
+      mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+    spec:
+      initContainers:
+      - name: init-masterslave
+        image: mariadb:10.3
+        command:
+          - bash
+          - /mnt/config-template/init-configurations.sh
+          - /mnt/config-map
+        volumeMounts:
+          - mountPath: /mnt/secrets
+            name: mariadb-secrets-vol
+            readOnly: true
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
+          - mountPath: /mnt/config-map
+            name: mariadb-config-vol
+      containers:
+      - command:
+        - bash
+        # copy the correct configuration for master or slave and start mysqld based on the pod hostname (ending in -0 is master, otherwise a slave)
+        - /mnt/config-map/start-mariadb-instance.sh 
+        env:
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "Y"
+        image: mariadb:10.3
+        name: mariadb-masterslave
+        ports:
+        - containerPort: 3306
+        resources: {}
+        volumeMounts:
+        - name: mariadb-entrypoint-vol
+          mountPath: /docker-entrypoint-initdb.d
+        - name: mariadb-config-vol
+          mountPath: /mnt/config-map
+        # a permanent volume for data storage
+        - name: data
+          mountPath: /var/lib/mysql
+          subPath: mysql
+        livenessProbe:
+          exec:
+            command: ["mysqladmin", "ping"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            # Check we can execute queries over TCP (skip-networking is off).
+            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          timeoutSeconds: 1
+      restartPolicy: Always
+      volumes:
+      - name: mariadb-entrypoint-vol 
+        emptyDir: {}
+      - name: mariadb-config-vol
+        emptyDir: {}
+      - name: mariadb-configtemplate-vol
+        configMap:
+          name: mariadb-config
+      - name: mariadb-secrets-vol
+        secret:
+          secretName: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-secret
+  # ensures persistent volumes end up on the same pod
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
