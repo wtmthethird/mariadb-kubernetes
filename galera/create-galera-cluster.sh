@@ -27,6 +27,7 @@ function parse_options() {
     REPLPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
     DRY_RUN=""
     CLEAN=""
+    KEEP_SECRETS=""
     
     while [[ $# -gt 0 ]]
     do
@@ -61,6 +62,10 @@ function parse_options() {
         CLEAN="true"
         shift
         ;;
+        (--keep-secrets)
+        KEEP_SECRETS="true"
+        shift
+        ;;
         (-h|*)
         print_usage
         ;;
@@ -83,7 +88,7 @@ function expand_templates() {
 
     for filename in $TEMPDIR/templates/*.yaml; do
         sed -i -e "s/{{APPLICATION}}/$APP/g" \
-	    -e "s/{{ENVIRONMENT}}/$ENV/g" \
+	        -e "s/{{ENVIRONMENT}}/$ENV/g" \
             -e "s/{{ADMIN_USERNAME}}/$(echo -n $DBUSER | base64)/g" \
             -e "s/{{ADMIN_PASSWORD}}/$(echo -n $DBPWD | base64)/g" \
             -e "s/{{REPLICATION_USERNAME}}/$(echo -n $REPLUSER | base64)/g" \
@@ -103,10 +108,12 @@ KUBECTL=kubectl
 expand_templates
 
 if [ "$DRY_RUN" == "" ]; then
-   $KUBECTL delete configmap mariadb-galera-config 2> /dev/null
-   $KUBECTL delete secrets $APP-$ENV-mariadb-secret 2> /dev/null
-   $KUBECTL delete -f "$TEMPLATE"/galera.yaml 2> /dev/null
-   $KUBECTL delete -f "$TEMPLATE"/maxscale.yaml 2> /dev/null
+    $KUBECTL delete configmap mariadb-galera-config 2> /dev/null
+    if [ "$KEEP_SECRETS" == "" ]; then
+        $KUBECTL delete secrets $APP-$ENV-mariadb-secret 2> /dev/null
+    fi
+    $KUBECTL delete -f "$TEMPLATE"/galera.yaml 2> /dev/null
+    $KUBECTL delete -f "$TEMPLATE"/maxscale.yaml 2> /dev/null
 #    $KUBECTL delete -f "$TEMPLATE"/prometheus.yaml 2> /dev/null
     if [ "$CLEAN" == "true" ]; then
         $KUBECTL delete persistentvolumeclaims mariadb-galera-data-vol-test-test-galera-0 2> /dev/null
@@ -122,31 +129,33 @@ set -e
 # create configmaps for the configurations of the two types of service
 $KUBECTL create configmap mariadb-galera-config --from-file="$TEMPLATE"/config/ $DRY_RUN
 if [ "$DRY_RUN" != "" ]; then
-   echo "---"
+    echo "---"
 fi
 
 # create the secret that holds user names and passwords
-$KUBECTL create -f "$TEMPLATE"/mariadb-secret.yaml $DRY_RUN
+if [ "$KEEP_SECRETS" == "" ]; then
+    $KUBECTL create -f "$TEMPLATE"/mariadb-secret.yaml $DRY_RUN
+fi
 if [ "$DRY_RUN" != "" ]; then
-   echo "---"
+        echo "---"
 fi
 
 # create the galera cluster as a stateful set (including service definitions)
 $KUBECTL create -f "$TEMPLATE"/galera.yaml $DRY_RUN
 if [ "$DRY_RUN" != "" ]; then
-   echo "---"
+    echo "---"
 fi
 
 # all mariadb servers are available, create maxscale instance
 $KUBECTL create -f "$TEMPLATE"/maxscale.yaml $DRY_RUN
 if [ "$DRY_RUN" != "" ]; then
-   echo "---"
+    echo "---"
 fi
 
 # start prometheus
 # $KUBECTL create -f "$TEMPLATE"/prometheus.yaml $DRY_RUN
 # if [ "$DRY_RUN" != "" ]; then
-#    echo "---"
+#     echo "---"
 # fi
 
 # cleanup temporary files
