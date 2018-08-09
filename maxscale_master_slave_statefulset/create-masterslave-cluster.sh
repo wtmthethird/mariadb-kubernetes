@@ -1,5 +1,5 @@
 #!/bin/bash
-# (C) 2018 MariaDB Corporation
+# Copyright (C) 2018 MariaDB Corporation
 # Creates a templatized master-slave cluster fronted by MaxScale in Kubernetes
 # User-defined parameters are "application" and "environment"
 
