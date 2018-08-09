@@ -1,11 +1,11 @@
 #!/bin/bash
-# (C) 2018 MariaDB Corporation
+# Copyright (C) 2018 MariaDB Corporation
 # Creates a templatized master-slave cluster fronted by MaxScale in Kubernetes
 # User-defined parameters are "application" and "environment"
 
 function print_usage() {
     echo "Usage: "
-    echo "create-masterslave-cluster.sh -a=<application> -e=<environment> [<options>]"
+    echo "create-masterslave-cluster.sh -a <application> -e <environment> [<options>]"
     echo ""
     echo "Supported options: "
     echo "         -u <database user>, default: mariadb-admin"
