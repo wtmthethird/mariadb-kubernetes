@@ -1,11 +1,17 @@
 #!/bin/bash
-# (C) 2018 MariaDB Corporation
+# Copyright (C) 2018 MariaDB Corporation
 # Creates a templatized master-slave cluster fronted by MaxScale in Kubernetes
 # User-defined parameters are "application" and "environment"
 
 function print_usage() {
     echo "Usage: "
-    echo "create-masterslave-cluster.sh -a=<application> -e=<environment> [<options>]"
+    echo "create-masterslave-cluster.sh -a <application> -e <environment> [<options>]"
+    echo ""
+    echo "Required options: "
+    echo "         -a <application name>"
+    echo "         -e <environment name>"
+    echo ""
+    echo "<application name>-<environment name> will be prepended to kubernetes instance names"
     echo ""
     echo "Supported options: "
     echo "         -u <database user>, default: mariadb-admin"
@@ -25,10 +31,10 @@ function parse_options() {
     REPLUSER="repl"
     REPLPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
     DRY_RUN=""
-    
+
     while [[ $# -gt 0 ]]
     do
-    
+
     key="$1"
     case $key in
         (-a|--app)
@@ -84,7 +90,7 @@ function expand_templates() {
             -e "s/{{REPLICATION_PASSWORD}}/$(echo -n $REPLPWD | base64)/g" \
             $filename
     done
-    
+
     TEMPLATE="$TEMPDIR/templates"
 }
 
