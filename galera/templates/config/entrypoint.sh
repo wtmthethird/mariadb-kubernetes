@@ -6,6 +6,10 @@ set -ex
 [[ $(hostname) =~ -([0-9]+)$ ]] || exit 1
 server_id=${BASH_REMATCH[1]}
 
+DB_HOST="$(hostname -f | cut -d '.' -f 1).$(hostname -f | cut -d '.' -f 2)"
+
+MASTER_HOST=$(perl /register-instance-pkg.pl $DB_HOST http {{APPLICATION}}-{{ENVIRONMENT}}-maxscale-0.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust 8989 admin mariadb)
+
 if [[ $server_id -eq 0 ]]; then
     if [[ ! -d /var/lib/mysql/mysql ]]; then
         # fix file permissions for fluentd
@@ -38,9 +42,9 @@ if [[ $server_id -eq 0 ]]; then
         mysql -vvv -Bse "FLUSH PRIVILEGES;"
     else
         # check if any other instance is up
-        PING0=$(mysql --host={{APPLICATION}}-{{ENVIRONMENT}}-galera-0.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera -Bse "SELECT 1" -u{{ADMIN_USERNAME}} -p{{ADMIN_PASSWORD}}) || PING0=0
-        PING1=$(mysql --host={{APPLICATION}}-{{ENVIRONMENT}}-galera-1.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera -Bse "SELECT 1" -u{{ADMIN_USERNAME}} -p{{ADMIN_PASSWORD}}) || PING1=0
-        PING2=$(mysql --host={{APPLICATION}}-{{ENVIRONMENT}}-galera-2.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera -Bse "SELECT 1" -u{{ADMIN_USERNAME}} -p{{ADMIN_PASSWORD}}) || PING2=0
+        PING0=$(mysql --host={{APPLICATION}}-{{ENVIRONMENT}}-galera-0.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust -Bse "SELECT 1" -u{{ADMIN_USERNAME}} -p{{ADMIN_PASSWORD}}) || PING0=0
+        PING1=$(mysql --host={{APPLICATION}}-{{ENVIRONMENT}}-galera-1.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust -Bse "SELECT 1" -u{{ADMIN_USERNAME}} -p{{ADMIN_PASSWORD}}) || PING1=0
+        PING2=$(mysql --host={{APPLICATION}}-{{ENVIRONMENT}}-galera-2.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust -Bse "SELECT 1" -u{{ADMIN_USERNAME}} -p{{ADMIN_PASSWORD}}) || PING2=0
 
         if [[ $PING0 -eq 1 ]] || [[ $PING1 -eq 1 ]] || [[ $PING2 -eq 1 ]]; then
             # start mysql

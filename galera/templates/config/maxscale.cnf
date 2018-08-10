@@ -1,14 +1,26 @@
 [maxscale]
 threads=auto
 substitute_variables=true
+# new entries
+admin_enabled=true
+admin_host=0.0.0.0 
 
-[Galera Monitor]
+[MaxAdmin-Service]
+type=service
+router=cli
+
+[MaxAdmin-Listener]
+type=listener
+service=MaxAdmin-Service
+protocol=maxscaled
+socket=default
+
+[MariaDB-Monitor]
 type=monitor
 module=galeramon
-servers=server1,server2,server3
 user={{REPLICATION_USERNAME}}
 passwd={{REPLICATION_PASSWORD}}
-monitor_interval=10000
+monitor_interval=2000
 disable_master_failback=1
 
 [qla]
@@ -22,20 +34,18 @@ module=regexfilter
 match=fetch
 replace=select
 
-[RW]
+[Read-Write-Service]
 type=service
 router=readwritesplit
-servers=server1,server2,server3
 user={{REPLICATION_USERNAME}}
 passwd={{REPLICATION_PASSWORD}}
 max_slave_connections=100%
 router_options=slave_selection_criteria=LEAST_CURRENT_OPERATIONS
 
-[RR]
+[Read-Only-Service]
 type=service
 router=readconnroute
 router_options=synced
-servers=server1,server2,server3
 user={{REPLICATION_USERNAME}}
 passwd={{REPLICATION_PASSWORD}}
 
@@ -58,13 +68,13 @@ router=cli
 
 [Read-Only-Listener]
 type=listener
-service=RR
+service=Read-Only-Service
 protocol=mariadbclient
 port=3307
 
 [Read-Write-Listener]
 type=listener
-service=RW
+service=Read-Write-Service
 protocol=mariadbclient
 port=3308
 
@@ -73,21 +83,3 @@ type=listener
 service=MaxInfo
 protocol=HTTPD
 port=8003
-
-[server1]
-type=server
-address={{APPLICATION}}-{{ENVIRONMENT}}-galera-0.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera
-port=3306
-protocol=mariadbbackend
-
-[server2]
-type=server
-address={{APPLICATION}}-{{ENVIRONMENT}}-galera-1.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera
-port=3306
-protocol=mariadbbackend
-
-[server3]
-type=server
-address={{APPLICATION}}-{{ENVIRONMENT}}-galera-2.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera
-port=3306
-protocol=mariadbbackend

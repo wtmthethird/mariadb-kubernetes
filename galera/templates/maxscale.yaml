@@ -1,29 +1,12 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-maxscale
-  labels:
-    app: {{APPLICATION}}-{{ENVIRONMENT}}
-spec:
-  ports:
-  - name: maxscale-readwrite
-    port: 3307
-    targetPort: 3307
-  - name: maxscale-read
-    port: 3308
-    targetPort: 3308
-  selector:
-    app: {{APPLICATION}}-{{ENVIRONMENT}}
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-maxscale
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-maxscale
 spec:
   selector:
     matchLabels:
       app: {{APPLICATION}}-{{ENVIRONMENT}}
-  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-maxscale
+  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
   replicas: 1
   template:
     metadata:
@@ -58,6 +41,7 @@ spec:
         name: maxscale
         ports:
         - containerPort: 3307
+        - containerPort: 8989
         - containerPort: 3308
         resources: {}
         volumeMounts:

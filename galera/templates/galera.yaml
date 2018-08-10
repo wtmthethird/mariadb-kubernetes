@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
   labels:
     app: {{APPLICATION}}-{{ENVIRONMENT}}
 spec:
@@ -10,6 +10,15 @@ spec:
   - name: mariadb
     port: 3306
     targetPort: 3306
+  - name: maxscale-readwrite
+    port: 3307
+    targetPort: 3307
+  - name: maxscale-read
+    port: 3308
+    targetPort: 3308
+  - name: maxscale-api
+    port: 8989
+    targetPort: 8989
   clusterIP: None
   selector:
     app: {{APPLICATION}}-{{ENVIRONMENT}}
@@ -23,7 +32,7 @@ spec:
   selector:
     matchLabels:
       app: {{APPLICATION}}-{{ENVIRONMENT}}
-  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera
+  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
   replicas: 3
   template:
     metadata:
@@ -31,7 +40,7 @@ spec:
         app: {{APPLICATION}}-{{ENVIRONMENT}}
     spec:
       initContainers:
-      - name: init-galera1
+      - name: init-galera
         image: mariadb:10.3
         command:
           - bash
@@ -44,22 +53,7 @@ spec:
           - mountPath: /mnt/config-template
             name: mariadb-galera-configmap-vol
           - mountPath: /etc/parsed-config
-            name: mariadb-config-vol1
-
-      - name: init-galera2
-        image: mariadb:10.3
-        command:
-          - bash
-          - /mnt/config-template/init-configurations.sh
-          - /etc/parsed-config
-        volumeMounts:
-          - mountPath: /mnt/secrets
-            name: mariadb-secrets-vol
-            readOnly: true
-          - mountPath: /mnt/config-template
-            name: mariadb-galera-configmap-vol
-          - mountPath: /etc/parsed-config
-            name: mariadb-config-vol2
+            name: mariadb-config-vol
 
       containers:
       - name: galera
@@ -80,12 +74,15 @@ spec:
           mountPath: /var/lib/mysql
         - name: mariadb-galera-log-vol
           mountPath: /var/log/mysql
-        - name: mariadb-config-vol1
+        - name: mariadb-config-vol
           mountPath: /entrypoint.sh
           subPath: entrypoint.sh
-        - name: mariadb-config-vol2
+        - name: mariadb-config-vol
           mountPath: /etc/mysql/mariadb.conf.d/50-server.cnf
           subPath: 50-server.cnf
+        - name: mariadb-config-vol
+          mountPath: /register-instance-pkg.pl
+          subPath: register-instance-pkg.pl
 
         livenessProbe:
           exec:
@@ -112,7 +109,7 @@ spec:
         image: fluent/fluentd:latest
         resources: {}
         volumeMounts:
-        - name: mariadb-config-vol1
+        - name: mariadb-config-vol
           mountPath: /fluentd/etc/fluent.conf
           subPath: fluent.conf
         - name: mariadb-galera-log-vol
@@ -124,9 +121,7 @@ spec:
       - name: mariadb-galera-configmap-vol
         configMap:
           name: mariadb-galera-config
-      - name: mariadb-config-vol1
-        emptyDir: {}
-      - name: mariadb-config-vol2
+      - name: mariadb-config-vol
         emptyDir: {}
       - name: mariadb-secrets-vol
         secret:

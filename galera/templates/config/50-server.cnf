@@ -26,7 +26,7 @@ wsrep_cluster_name="{{APPLICATION}}-{{ENVIRONMENT}}-cluster"
 ; for docker-compose
 ; wsrep_cluster_address="gcomm://galera-0,galera-1,galera-2"
 ; for kubernetes
-wsrep_cluster_address="gcomm://{{APPLICATION}}-{{ENVIRONMENT}}-galera-0.{{APPLICATION}}-{{ENVIRONMENT}}-mariadb-galera"
+wsrep_cluster_address="gcomm://{{APPLICATION}}-{{ENVIRONMENT}}-galera-0.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust"
 wsrep_sst_method=rsync
 
 #
