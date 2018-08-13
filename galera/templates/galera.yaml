@@ -78,7 +78,7 @@ spec:
           mountPath: /entrypoint.sh
           subPath: entrypoint.sh
         - name: mariadb-config-vol
-          mountPath: /etc/mysql/mariadb.conf.d/50-server.cnf
+          mountPath: /mdb-config/50-server.cnf
           subPath: 50-server.cnf
         - name: mariadb-config-vol
           mountPath: /register-instance-pkg.pl
@@ -136,11 +136,11 @@ spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: 1Gi
+          storage: 200Mi
   - metadata:
       name: mariadb-galera-log-vol
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: 1Gi
+          storage: 200Mi

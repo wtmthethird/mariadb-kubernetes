@@ -18,6 +18,8 @@ if [[ $server_id -eq 0 ]]; then
         touch /var/log/mysql/error.log
         chmod 666 /var/log/mysql/error.log
 
+        cp /mdb-config/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
+
         # init database
         mysql_install_db --user=mysql --datadir=/var/lib/mysql
 
@@ -41,23 +43,25 @@ if [[ $server_id -eq 0 ]]; then
 
         mysql -vvv -Bse "FLUSH PRIVILEGES;"
     else
-        # check if any other instance is up
-        PING0=$(mysql --host={{APPLICATION}}-{{ENVIRONMENT}}-galera-0.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust -Bse "SELECT 1" -u{{ADMIN_USERNAME}} -p{{ADMIN_PASSWORD}}) || PING0=0
-        PING1=$(mysql --host={{APPLICATION}}-{{ENVIRONMENT}}-galera-1.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust -Bse "SELECT 1" -u{{ADMIN_USERNAME}} -p{{ADMIN_PASSWORD}}) || PING1=0
-        PING2=$(mysql --host={{APPLICATION}}-{{ENVIRONMENT}}-galera-2.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust -Bse "SELECT 1" -u{{ADMIN_USERNAME}} -p{{ADMIN_PASSWORD}}) || PING2=0
+        COUNTER=1
+        until [[ $COUNTER -gt 9 ]] || [[ $(mysql --host={{APPLICATION}}-{{ENVIRONMENT}}-galera-$COUNTER.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust -Bse "SELECT 1" -u{{ADMIN_USERNAME}} -p{{ADMIN_PASSWORD}}) -eq 1 ]]; do
+            let COUNTER+=1
+        done
 
-        if [[ $PING0 -eq 1 ]] || [[ $PING1 -eq 1 ]] || [[ $PING2 -eq 1 ]]; then
-            # start mysql
-            service mysql start
-        else
-            # start mysql and create new cluster
-            rm /var/lib/mysql/galera.cache
-            rm /var/lib/mysql/grastate.dat
-            rm /var/lib/mysql/gvwstate.dat
+        if [[ $COUNTER -gt 9 ]]; then
+            # no cluster is active, start a fresh new one
+            rm -f /var/lib/mysql/galera.cache
+            rm -f /var/lib/mysql/grastate.dat
+            rm -f /var/lib/mysql/gvwstate.dat
             service mysql start --wsrep-new-cluster
+        else
+            # join existing cluster
+            sed -r "s/{{APPLICATION}}-{{ENVIRONMENT}}-galera-0\.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust/{{APPLICATION}}-{{ENVIRONMENT}}-galera-$COUNTER.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust/" /mdb-config/50-server.cnf > /etc/mysql/mariadb.conf.d/50-server.cnf
+            service mysql start
         fi
     fi
 else
+    
     if [[ ! -d /var/lib/mysql/mysql ]]; then
         # fix file permissions for fluentd
         touch /var/log/mysql/slow-query.log
@@ -68,6 +72,12 @@ else
         # init database
         mysql_install_db --user=mysql --datadir=/var/lib/mysql
     fi
+
+    COUNTER=0
+    until [[ $COUNTER -gt 9 ]] || [[ $(mysql --host={{APPLICATION}}-{{ENVIRONMENT}}-galera-$COUNTER.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust -Bse  "SELECT 1" -u{{ADMIN_USERNAME}} -p{{ADMIN_PASSWORD}}) -eq 1 ]]; do
+        let COUNTER+=1
+    done
+    sed -r "s/{{APPLICATION}}-{{ENVIRONMENT}}-galera-0\.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust/{{APPLICATION}}-{{ENVIRONMENT}}-galera-$COUNTER.{{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust/" /mdb-config/50-server.cnf > /etc/mysql/mariadb.conf.d/50-server.cnf
 
     # start mysql
     service mysql start
