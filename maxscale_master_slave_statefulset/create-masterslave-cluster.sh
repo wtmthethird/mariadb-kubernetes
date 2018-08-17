@@ -27,9 +27,9 @@ function parse_options() {
     APP=""
     ENV=""
     DBUSER="admin"
-    DBPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
+    DBPWD=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
     REPLUSER="repl"
-    REPLPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
+    REPLPWD=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
     DRY_RUN=""
 
     while [[ $# -gt 0 ]]
