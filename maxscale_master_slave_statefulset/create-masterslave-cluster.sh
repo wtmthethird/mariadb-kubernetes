@@ -27,9 +27,9 @@ function parse_options() {
     APP=""
     ENV=""
     DBUSER="admin"
-    DBPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
+    DBPWD=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
     REPLUSER="repl"
-    REPLPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
+    REPLPWD=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
     DRY_RUN=""
 
     while [[ $# -gt 0 ]]
@@ -82,13 +82,13 @@ function expand_templates() {
     cp -r "$DIR/templates" "$TEMPDIR"
 
     for filename in $TEMPDIR/templates/*.yaml; do
-        sed -i -e "s/{{APPLICATION}}/$APP/g" \
+        sed -e "s/{{APPLICATION}}/$APP/g" \
 	    -e "s/{{ENVIRONMENT}}/$ENV/g" \
             -e "s/{{ADMIN_USERNAME}}/$(echo -n $DBUSER | base64)/g" \
             -e "s/{{ADMIN_PASSWORD}}/$(echo -n $DBPWD | base64)/g" \
             -e "s/{{REPLICATION_USERNAME}}/$(echo -n $REPLUSER | base64)/g" \
             -e "s/{{REPLICATION_PASSWORD}}/$(echo -n $REPLPWD | base64)/g" \
-            $filename
+            -i '' $filename
     done
 
     TEMPLATE="$TEMPDIR/templates"
