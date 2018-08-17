@@ -82,13 +82,13 @@ function expand_templates() {
     cp -r "$DIR/templates" "$TEMPDIR"
 
     for filename in $TEMPDIR/templates/*.yaml; do
-        sed -i -e "s/{{APPLICATION}}/$APP/g" \
+        sed -e "s/{{APPLICATION}}/$APP/g" \
 	    -e "s/{{ENVIRONMENT}}/$ENV/g" \
             -e "s/{{ADMIN_USERNAME}}/$(echo -n $DBUSER | base64)/g" \
             -e "s/{{ADMIN_PASSWORD}}/$(echo -n $DBPWD | base64)/g" \
             -e "s/{{REPLICATION_USERNAME}}/$(echo -n $REPLUSER | base64)/g" \
             -e "s/{{REPLICATION_PASSWORD}}/$(echo -n $REPLPWD | base64)/g" \
-            $filename
+            -i '' $filename
     done
 
     TEMPLATE="$TEMPDIR/templates"
