@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
+  name: {{MARIADB-LABEL}}-mdb-clust
   labels:
-    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+    mariadb: {{MARIADB-LABEL}}
 spec:
   ports:
   - name: mariadb
@@ -12,25 +12,39 @@ spec:
     targetPort: 3306
   clusterIP: None
   selector:
-    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+    mariadb: {{MARIADB-LABEL}}
 ---   
 # a StatefulSet for the master/slave cluster 
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-ms
+  name: {{MARIADB_LABEL}}-mdb-ms
+  labels:
+    mariadb: {{MARIADB_LABEL}}
+    server.mariadb: {{MARIADB_LABEL}}
 spec:
   selector:
     matchLabels:
-      mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
-  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
+      server.mariadb: {{MARIADB_LABEL}}
+  serviceName: {{MARIADB_LABEL}}-mdb-clust
   replicas: 3
   template:
     metadata:
       labels:
-        mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+        mariadb: {{MARIADB_LABEL}}
+        server.mariadb: {{MARIADB_LABEL}}
     spec:
       initContainers:
+      # runs a state store client to determine the IP of the active master
+      - name: init-get-master
+        image: node:alpine
+        command: ["/bin/sh"]
+        args: ["-c", "cd /root; tar xzf /mnt/config-map/state-store.tar.gz; node ./client.js mariadb-init {{MARIADB_LABEL}}-mdb-state /mnt/config-map"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /mnt/config-map
+            name: mariadb-config-vol
+      # runs an initialization script to prepare the correct startup configuration
       - name: init-masterslave
         image: mariadb:10.3
         command:
@@ -50,8 +64,8 @@ spec:
       containers:
       - command:
         - bash
-        # copy the correct configuration for master or slave and start mysqld based on the pod hostname (ending in -0 is master, otherwise a slave)
-        - /mnt/config-map/start-mariadb-instance.sh 
+        # start a mariadb instance
+        - /mnt/config-map/mariadb-server/start-mariadb-instance.sh 
         env:
         - name: MYSQL_ALLOW_EMPTY_PASSWORD
           value: "Y"
@@ -82,6 +96,15 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 2
           timeoutSeconds: 1
+      # runs a state store client to ensure the state is being maitained
+      - name: init-getmaster
+        image: node:alpine
+        command: ["/bin/sh"]
+        args: ["-c", "cd /root; tar xzf /mnt/config-map/state-store.tar.gz; node ./client.js mariadb {{MARIADB_LABEL}}-mdb-state /mnt/config-map"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /mnt/config-map
+            name: mariadb-config-vol
       restartPolicy: Always
       volumes:
       - name: mariadb-entrypoint-vol 
@@ -98,8 +121,11 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: data
+      labels:
+        mariadb: {{MARIADB-LABEL}}
+        server.mariadb: {{MARIADB-LABEL}}
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: 1Gi
+          storage: {{MARIADB-VOLUME-SIZE}}Gi

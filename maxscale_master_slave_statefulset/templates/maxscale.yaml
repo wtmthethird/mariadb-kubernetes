@@ -1,9 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb
+  name: {{MARIADB-LABEL}}-mariadb
   labels:
-    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+    mariadb: {{MARIADB-LABEL}}
+    maxscale.mariadb: {{MARIADB-LABEL}}
 spec:
   ports:
   - name: maxscale-readwrite
@@ -13,22 +14,22 @@ spec:
     port: 4008
     targetPort: 4008
   selector:
-    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+    maxscale.mariadb: {{MARIADB-LABEL}}
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
-  name: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-mxs
+  name: {{MARIADB-LABEL}}-mdb-mxs
 spec:
   selector:
     matchLabels:
-      mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
-  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
-  replicas: 1
+      mariadb: {{MARIADB-LABEL}}
+      maxscale.mariadb: {{MARIADB-LABEL}}
+  replicas: 2
   template:
     metadata:
       labels:
-        mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+        mariadb: {{MARIADB-LABEL}}
     spec:
       initContainers:
       - name: init-maxscale
@@ -70,4 +71,4 @@ spec:
           name: mariadb-config
       - name: mariadb-secrets-vol
         secret:
-          secretName: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-secret
+          secretName: {{MARIADB-LABEL}}-mariadb-secret

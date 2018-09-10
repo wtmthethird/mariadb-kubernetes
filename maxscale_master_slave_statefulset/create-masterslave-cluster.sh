@@ -82,8 +82,7 @@ function expand_templates() {
     cp -r "$DIR/templates" "$TEMPDIR"
 
     for filename in $TEMPDIR/templates/*.yaml; do
-        sed -e "s/{{APPLICATION}}/$APP/g" \
-	    -e "s/{{ENVIRONMENT}}/$ENV/g" \
+        sed -e "s/{{MARIADB-LABEL}}/$APP-$ENV/g" \
             -e "s/{{ADMIN_USERNAME}}/$(echo -n $DBUSER | base64)/g" \
             -e "s/{{ADMIN_PASSWORD}}/$(echo -n $DBPWD | base64)/g" \
             -e "s/{{REPLICATION_USERNAME}}/$(echo -n $REPLUSER | base64)/g" \
@@ -107,6 +106,11 @@ if [ "$DRY_RUN" == "" ]; then
 fi
 
 set -e
+
+# compress the state store in order for it to fit in a config map
+tar czf "$TEMPLATE"/config/state-store.tar.gz "$TEMPLATE"/config/state-store/*
+rm -R -f "$TEMPLATE"/config/state-store
+
 # create configmaps for the configurations of the two types of service
 $KUBECTL create configmap mariadb-config --from-file="$TEMPLATE"/config/ $DRY_RUN
 if [ "$DRY_RUN" != "" ]; then
@@ -119,8 +123,7 @@ if [ "$DRY_RUN" != "" ]; then
    echo "---"
 fi
 
-# create the master/slave cluster as a stateful set (including service definitions)
-$KUBECTL create -f "$TEMPLATE"/masterslave.yaml $DRY_RUN
+$KUBECTL create -f "$TEMPLATE"/state-store.yaml $DRY_RUN
 if [ "$DRY_RUN" != "" ]; then
    echo "---"
 fi
@@ -130,6 +133,13 @@ $KUBECTL create -f "$TEMPLATE"/maxscale.yaml $DRY_RUN
 if [ "$DRY_RUN" != "" ]; then
    echo "---"
 fi
+
+# create the master/slave cluster as a stateful set (including service definitions)
+$KUBECTL create -f "$TEMPLATE"/masterslave.yaml $DRY_RUN
+if [ "$DRY_RUN" != "" ]; then
+   echo "---"
+fi
+
 
 # cleanup temporary files
 rm -R -f "$TEMPDIR"

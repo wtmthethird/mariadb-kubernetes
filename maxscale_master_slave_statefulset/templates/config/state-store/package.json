@@ -1,0 +1,16 @@
+{
+  "name": "mariadb-state",
+  "version": "0.0.1",
+  "description": "A simple state store for MariaDB Kubernetes clusters",
+  "main": "server.js",
+  "scripts": {
+    "test": "test.js"
+  },
+  "author": "Alexander Aldev",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "fs": "0.0.1-security"
+  }
+}
