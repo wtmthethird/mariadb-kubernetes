@@ -1,0 +1,113 @@
+# Headless service for stable DNS entries for StatefulSet members
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mcs-sandbox
+  labels:
+    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+spec:
+  ports:
+  - name: columnstore
+    port: 3306
+    targetPort: 3306
+  selector:
+    mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+--- 
+# a StatefulSet for the master/slave cluster 
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-sncs
+spec:
+  selector:
+    matchLabels:
+      mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+  serviceName: {{APPLICATION}}-{{ENVIRONMENT}}-mdb-clust
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
+    spec:
+      initContainers:
+      - name: init-mariadb-columnstore
+        image: mariadb/columnstore:latest
+        command:
+          - bash
+          - /mnt/config-template/init-configurations.sh
+        volumeMounts:
+          - mountPath: /mnt/secrets
+            name: mariadb-secrets-vol
+            readOnly: true
+          - name: mariadb-entrypoint-vol
+            mountPath: /docker-entrypoint-initdb.d
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
+          - mountPath: /mnt/config-map
+            name: mariadb-config-vol
+          - mountPath: /mnt/bookstore-csv 
+            name: mariadb-bookstore
+      containers:
+      - command:
+        - bash
+        # copy the correct configuration for master or slave and start mysqld based on the pod hostname (ending in -0 is master, otherwise a slave)
+        - /mnt/config-map/start-mariadb-instance.sh 
+        env:
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "Y"
+        image: mariadb/columnstore:latest
+        name: mariadb-columnstore
+        ports:
+        - containerPort: 3306
+        resources: {}
+        volumeMounts:
+        - name: mariadb-entrypoint-vol
+          mountPath: /docker-entrypoint-initdb.d
+        - name: mariadb-config-vol
+          mountPath: /mnt/config-map
+        - mountPath: /mnt/bookstore-csv 
+          name: mariadb-bookstore
+        # a permanent volume for data storage
+        - name: data
+          mountPath: /usr/local/mariadb/columnstore/mysql/db
+        livenessProbe:
+          exec:
+            command: ["/usr/local/mariadb/columnstore/bin/mcsadmin", "getSystemStatus|grep -c \"System        ACTIVE\""]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            # Check if columnstore is active).
+            command: ["/usr/local/mariadb/columnstore/bin/mcsadmin", "getSystemStatus|grep -c \"System        ACTIVE\""]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          timeoutSeconds: 1
+      restartPolicy: Always
+      volumes:
+      - name: mariadb-entrypoint-vol 
+        emptyDir: {}
+      - name: mariadb-config-vol
+        emptyDir: {}
+      - name: mariadb-configtemplate-vol
+        configMap:
+          name: mariadb-config
+      - name: mariadb-secrets-vol
+        secret:
+          secretName: {{APPLICATION}}-{{ENVIRONMENT}}-mariadb-secret
+  # ensures persistent volumes end up on the same pod
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: mariadb-bookstore
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
