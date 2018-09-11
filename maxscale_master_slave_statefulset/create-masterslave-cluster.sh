@@ -97,7 +97,7 @@ function expand_templates() {
             -e "s/{{ADMIN_PASSWORD}}/$(echo -n $DBPWD | base64)/g" \
             -e "s/{{REPLICATION_USERNAME}}/$(echo -n $REPLUSER | base64)/g" \
             -e "s/{{REPLICATION_PASSWORD}}/$(echo -n $REPLPWD | base64)/g" \
-            -i $filename
+            -i '' $filename
     done
 
     TEMPLATE="$TEMPDIR/templates"
