@@ -20,16 +20,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{MARIADB-LABEL}}-mdb-mxs
+  labels:
+    mariadb: {{MARIADB-LABEL}}
+    maxscale.mariadb: {{MARIADB-LABEL}}
 spec:
   selector:
     matchLabels:
-      mariadb: {{MARIADB-LABEL}}
       maxscale.mariadb: {{MARIADB-LABEL}}
   replicas: 2
   template:
     metadata:
       labels:
-        mariadb: {{MARIADB-LABEL}}
+        maxscale.mariadb: {{MARIADB-LABEL}}
     spec:
       initContainers:
       - name: init-maxscale
@@ -47,6 +49,14 @@ spec:
           - mountPath: /etc/maxscale-cfg
             name: mariadb-config-vol
       containers:
+      - image: node:alpine
+        command: ["/bin/sh"]
+        args: ["-c", "cd /root; tar xzf /mnt/config-template/state-store.tar.gz; node ./client.js maxscale {{MARIADB-LABEL}}-mdb-state"]
+        imagePullPolicy: IfNotPresent
+        name: state
+        volumeMounts:
+          - name: mariadb-configtemplate-vol
+            mountPath: /mnt/config-template
       - args:
         - maxscale
         - -d

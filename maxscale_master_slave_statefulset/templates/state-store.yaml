@@ -2,10 +2,12 @@ kind: Service
 apiVersion: v1
 metadata:
   name: {{MARIADB-LABEL}}-mdb-state
+  labels:
+    mariadb: {{MARIADB-LABEL}}
+    state-store.mariadb: {{MARIADB-LABEL}}
 spec:
   selector:
     state-store.mariadb: {{MARIADB-LABEL}}
-    mariadb: {{MARIADB-LABEL}}
   ports:
   - protocol: TCP
     port: 80
@@ -15,8 +17,8 @@ kind: Deployment
 metadata:
   name: {{MARIADB-LABEL}}-mdb-state
   labels:
-    state-store.mariadb: {{MARIADB-LABEL}}
     mariadb: {{MARIADB-LABEL}}
+    state-store.mariadb: {{MARIADB-LABEL}}
 spec:
   replicas: 1
   selector:
@@ -26,21 +28,20 @@ spec:
     metadata:
       labels:
         state-store.mariadb: {{MARIADB-LABEL}}
-        mariadb: {{MARIADB-LABEL}}
     spec:
       containers:
       - image: node:alpine
         command: ["/bin/sh"]
-        args: ["-c", "cd /root; tar xzf /tmp/mariadb-state-store.tar.gz; node ./server.js"]
+        args: ["-c", "cd /root; tar xzf /mnt/config-template/state-store.tar.gz; node ./server.js"]
         imagePullPolicy: IfNotPresent
-        name: test-mdb-state
+        name: state-store
         ports:
         - containerPort: 80
         volumeMounts:
-          - name: config-vol
-            mountPath: /tmp
+          - name: mariadb-configtemplate-vol
+            mountPath: /mnt/config-template
       volumes:
-        - name: config-vol
-          configMap:
-            name: mariadb-state-store
+      - name: mariadb-configtemplate-vol
+        configMap:
+          name: mariadb-config
       restartPolicy: Always

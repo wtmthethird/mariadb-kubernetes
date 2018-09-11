@@ -241,7 +241,7 @@ function sendHeartbeat( success ) {
     // heartbeat endpoint
     var url = '/heartbeat/' + instance + '/' + status + '/' + (master == null ? 'na' : master );
     var request = { host: service, 
-                    port: 3000,
+                    port: 80,
                     path: url,
                     headers: { 'Accept': 'application/json', 'Accept-Charset': 'UTF-8' }
     };
