@@ -19,6 +19,3 @@ data:
 
   replication.sql: |
 {{ tpl (.Files.Get "config/replication.sql") . | indent 4 }}
-
-binaryData:
-  state-store.tar.gz: {{.Files.Get "config/state-store.tar.gz" | b64enc }}

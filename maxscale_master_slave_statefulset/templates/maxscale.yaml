@@ -27,7 +27,7 @@ spec:
   selector:
     matchLabels:
       maxscale.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
-  replicas: 2
+  replicas: {{ .Values.INITIAL_COUNT_MAXSCALE }}
   template:
     metadata:
       labels:
@@ -49,9 +49,9 @@ spec:
           - mountPath: /etc/maxscale-cfg
             name: mariadb-config-vol
       containers:
-      - image: node:alpine
+      - image: nastybuff/alpine
         command: ["/bin/sh"]
-        args: ["-c", "cd /root; tar xzf /mnt/config-template/state-store.tar.gz; node ./client.js maxscale {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state"]
+        args: ["-c", "cd /root; node ./client.js maxscale {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state"]
         imagePullPolicy: IfNotPresent
         name: state
         volumeMounts:

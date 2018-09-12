@@ -19,4 +19,14 @@
 .project
 .idea/
 *.tmproj
-templates/config/
+
+state-store/
+create-masterslave-cluster.ps1
+create-masterslave-cluster.sh
+delete-masterslave-cluster.ps1
+delete-masterslave-cluster.sh
+*.png
+*.jpg
+readme.OSX.md
+README.md
+Dockerfile

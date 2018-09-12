@@ -27,7 +27,7 @@ spec:
     matchLabels:
       server.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
   serviceName: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-clust
-  replicas: 3
+  replicas: {{ .Values.INITIAL_COUNT_TX }}
   template:
     metadata:
       labels:
@@ -36,9 +36,9 @@ spec:
       initContainers:
       # runs a state store client to determine the IP of the active master
       - name: init-get-master
-        image: node:alpine
+        image: nastybuff/alpine
         command: ["/bin/sh"]
-        args: ["-c", "cd /root; tar xzf /mnt/config-template/state-store.tar.gz; node ./client.js mariadb-init {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state /mnt/config-map"]
+        args: ["-c", "cd /root; node ./client.js mariadb-init {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state /mnt/config-map"]
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /mnt/config-map
@@ -99,9 +99,9 @@ spec:
           timeoutSeconds: 1
       # runs a state store client to ensure the state is being maitained
       - name: state
-        image: node:alpine
+        image: nastybuff/alpine
         command: ["/bin/sh"]
-        args: ["-c", "cd /root; tar xzf /mnt/config-template/state-store.tar.gz; node ./client.js mariadb {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state /mnt/config-map"]
+        args: ["-c", "cd /root; node ./client.js mariadb {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state /mnt/config-map"]
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /mnt/config-template
