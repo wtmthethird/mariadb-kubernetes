@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb-config
+  labels:
+    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+data:
+  init-configurations.sh: |
+{{ tpl (.Files.Get "config/init-configurations.sh") . | indent 4 }}
+
+  start-mariadb-instance.sh: |
+{{ tpl (.Files.Get "config/start-mariadb-instance.sh") . | indent 4 }}
+
+  maxscale.cnf: |
+{{ tpl (.Files.Get "config/maxscale.cnf") . | indent 4 }}
+
+  users.sql: |
+{{ tpl (.Files.Get "config/users.sql") . | indent 4 }}
+
+  replication.sql: |
+{{ tpl (.Files.Get "config/replication.sql") . | indent 4 }}
+
+binaryData:
+  state-store.tar.gz: {{.Files.Get "config/state-store.tar.gz" | b64enc }}

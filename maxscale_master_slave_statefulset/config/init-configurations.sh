@@ -4,11 +4,7 @@
 # the path to the target directory needs to be passed as first argument
 
 function expand_templates() {
-    sed -e "s/{{MASTER_HOST}}/$MASTER_HOST/g" \
-        -e "s/{{ADMIN_USER}}/$ADMIN_USER/g" \
-        -e "s/{{ADMIN_PASSWORD}}/$ADMIN_PWD/g" \
-        -e "s/{{REPLICATION_USER}}/$REPL_USER/g" \
-        -e "s/{{REPLICATION_PASSWORD}}/$REPL_PWD/g" \
+    sed -e "s/<<MASTER_HOST>>/$MASTER_HOST/g" \
         $1
 }
 
@@ -26,7 +22,7 @@ DB_HOST="$(hostname -f | cut -d '.' -f 1).$(hostname -f | cut -d '.' -f 2)"
 if [ "$1" == "maxscale" ]; then
     # ensure we replace with a configurations that will fail
     MASTER_HOST="should-not-be-used-here"
-    expand_templates /mnt/config-template/maxscale.cnf >> /etc/maxscale-cfg/maxscale.cnf
+    cat /mnt/config-template/maxscale.cnf >> /etc/maxscale-cfg/maxscale.cnf
 else
     cp /mnt/config-template/start-mariadb-instance.sh /mnt/config-map
     # if this is not a maxscale instance, make sure to ask maxscale who is the master
@@ -34,7 +30,7 @@ else
     if [[ ! -d /var/lib/mysql/mysql ]]; then
        if [[ "$MASTER_HOST" == "localhost" ]]; then
           # this is the master and it's the first run, ensure maxscale user is initialized
-	  expand_templates /mnt/config-template/users.sql > /docker-entrypoint-initdb.d/init.sql
+	  cp /mnt/config-template/users.sql /docker-entrypoint-initdb.d/init.sql
        else
 	  # 
           # a first run on a slave

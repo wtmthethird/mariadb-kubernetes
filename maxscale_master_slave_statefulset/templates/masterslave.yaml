@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{MARIADB-LABEL}}-mdb-clust
+  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-clust
   labels:
-    mariadb: {{MARIADB-LABEL}}
+    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
 spec:
   ports:
   - name: mariadb
@@ -12,33 +12,33 @@ spec:
     targetPort: 3306
   clusterIP: None
   selector:
-    mariadb: {{MARIADB-LABEL}}
+    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
 ---   
 # a StatefulSet for the master/slave cluster 
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{MARIADB-LABEL}}-mdb-ms
+  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-ms
   labels:
-    mariadb: {{MARIADB-LABEL}}
-    server.mariadb: {{MARIADB-LABEL}}
+    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    server.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
 spec:
   selector:
     matchLabels:
-      server.mariadb: {{MARIADB-LABEL}}
-  serviceName: {{MARIADB-LABEL}}-mdb-clust
+      server.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+  serviceName: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-clust
   replicas: 3
   template:
     metadata:
       labels:
-        server.mariadb: {{MARIADB-LABEL}}
+        server.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
     spec:
       initContainers:
       # runs a state store client to determine the IP of the active master
       - name: init-get-master
         image: node:alpine
         command: ["/bin/sh"]
-        args: ["-c", "cd /root; tar xzf /mnt/config-template/state-store.tar.gz; node ./client.js mariadb-init {{MARIADB-LABEL}}-mdb-state /mnt/config-map"]
+        args: ["-c", "cd /root; tar xzf /mnt/config-template/state-store.tar.gz; node ./client.js mariadb-init {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state /mnt/config-map"]
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /mnt/config-map
@@ -101,7 +101,7 @@ spec:
       - name: state
         image: node:alpine
         command: ["/bin/sh"]
-        args: ["-c", "cd /root; tar xzf /mnt/config-template/state-store.tar.gz; node ./client.js mariadb {{MARIADB-LABEL}}-mdb-state /mnt/config-map"]
+        args: ["-c", "cd /root; tar xzf /mnt/config-template/state-store.tar.gz; node ./client.js mariadb {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state /mnt/config-map"]
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /mnt/config-template
@@ -114,10 +114,10 @@ spec:
         emptyDir: {}
       - name: mariadb-configtemplate-vol
         configMap:
-          name: mariadb-config
+          name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb-config
       - name: mariadb-secrets-vol
         secret:
-          secretName: {{MARIADB-LABEL}}-mariadb-secret
+          secretName: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb-secret
   # ensures persistent volumes end up on the same pod
   volumeClaimTemplates:
   - metadata:
@@ -126,4 +126,4 @@ spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: {{MARIADB-VOLUME-SIZE}}Gi
+          storage: {{ .Values.MARIADB_VOLUME_SIZE }}
