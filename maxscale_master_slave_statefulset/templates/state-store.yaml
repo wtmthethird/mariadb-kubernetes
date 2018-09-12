@@ -30,9 +30,9 @@ spec:
         state-store.mariadb: {{MARIADB-LABEL}}
     spec:
       containers:
-      - image: node:alpine
+      - image: nastybuff/alpine
         command: ["/bin/sh"]
-        args: ["-c", "cd /root; tar xzf /mnt/config-template/state-store.tar.gz; node ./server.js"]
+        args: ["-c", "cd /root; node ./server.js"]
         imagePullPolicy: IfNotPresent
         name: state-store
         ports:

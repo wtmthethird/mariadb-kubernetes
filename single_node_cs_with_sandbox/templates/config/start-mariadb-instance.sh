@@ -5,11 +5,6 @@ echo "--------------------------"
 set -ex
 /bin/sh -x /usr/sbin/runit_bootstrap &
 
-#TODO: Call bookstore_load.sh instead
-
-#TODO: Identify where the data files are 
-#TODO: Fix probes
-#TODO: Remove debugs
 BOOKSTORE_DIR="/usr/local/mariadb/columnstore/mysql/db/bookstore"
 BOOKSTORE_LOADED="bookstore.loaded"
 BOOKSTORE_CSV="/mnt/bookstore-csv/csv"
