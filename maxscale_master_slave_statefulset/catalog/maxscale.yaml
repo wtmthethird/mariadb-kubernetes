@@ -4,7 +4,7 @@ metadata:
   name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb
   labels:
     mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
-    maxscale.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    endpoint.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
 spec:
   ports:
   - name: maxscale-readwrite
