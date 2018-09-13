@@ -13,8 +13,8 @@ spec:
   clusterIP: None
   selector:
     mariadb: {{APPLICATION}}-{{ENVIRONMENT}}
----   
-# a StatefulSet for the master/slave cluster 
+---
+# a StatefulSet for the master/slave cluster
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -32,7 +32,7 @@ spec:
     spec:
       initContainers:
       - name: init-masterslave
-        image: mariadb:10.3
+        image: mariadb/server:10.3
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
@@ -49,11 +49,11 @@ spec:
       - command:
         - bash
         # copy the correct configuration for master or slave and start mysqld based on the pod hostname (ending in -0 is master, otherwise a slave)
-        - /mnt/config-map/start-mariadb-instance.sh 
+        - /mnt/config-map/start-mariadb-instance.sh
         env:
         - name: MYSQL_ALLOW_EMPTY_PASSWORD
           value: "Y"
-        image: mariadb:10.3
+        image: mariadb/server:10.3
         name: mariadb-masterslave
         ports:
         - containerPort: 3306
@@ -82,7 +82,7 @@ spec:
           timeoutSeconds: 1
       restartPolicy: Always
       volumes:
-      - name: mariadb-entrypoint-vol 
+      - name: mariadb-entrypoint-vol
         emptyDir: {}
       - name: mariadb-config-vol
         emptyDir: {}

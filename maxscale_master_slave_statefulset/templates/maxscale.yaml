@@ -32,7 +32,7 @@ spec:
     spec:
       initContainers:
       - name: init-maxscale
-        image: mariadb:10.3
+        image: mariadb/server:10.3
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
