@@ -1,0 +1,2 @@
+masterslave=state-store.yaml maxscale.yaml masterslave.yaml
+standalone=standalone.yaml
