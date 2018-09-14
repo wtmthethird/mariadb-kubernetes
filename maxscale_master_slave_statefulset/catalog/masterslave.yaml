@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-clust
+  name: {{ .Values.LABEL }}-mdb-clust
   labels:
-    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    mariadb: {{ .Values.LABEL }}
 spec:
   ports:
   - name: mariadb
@@ -12,33 +12,33 @@ spec:
     targetPort: 3306
   clusterIP: None
   selector:
-    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    mariadb: {{ .Values.LABEL }}
 ---   
 # a StatefulSet for the master/slave cluster 
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-ms
+  name: {{ .Values.LABEL }}-mdb-ms
   labels:
-    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
-    server.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    mariadb: {{ .Values.LABEL }}
+    server.mariadb: {{ .Values.LABEL }}
 spec:
   selector:
     matchLabels:
-      server.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
-  serviceName: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-clust
+      server.mariadb: {{ .Values.LABEL }}
+  serviceName: {{ .Values.LABEL }}-mdb-clust
   replicas: {{ .Values.INITIAL_COUNT_TX }}
   template:
     metadata:
       labels:
-        server.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+        server.mariadb: {{ .Values.LABEL }}
     spec:
       initContainers:
       # runs a state store client to determine the IP of the active master
       - name: init-get-master
         image: nastybuff/alpine
         command: ["/bin/sh"]
-        args: ["-c", "cd /root; node ./client.js mariadb-init {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state /mnt/config-map"]
+        args: ["-c", "cd /root; node ./client.js mariadb-init {{ .Values.LABEL }}-mdb-state /mnt/config-map"]
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /mnt/config-map
@@ -101,7 +101,7 @@ spec:
       - name: state
         image: nastybuff/alpine
         command: ["/bin/sh"]
-        args: ["-c", "cd /root; node ./client.js mariadb {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state /mnt/config-map"]
+        args: ["-c", "cd /root; node ./client.js mariadb {{ .Values.LABEL }}-mdb-state /mnt/config-map"]
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /mnt/config-template
@@ -114,10 +114,10 @@ spec:
         emptyDir: {}
       - name: mariadb-configtemplate-vol
         configMap:
-          name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb-config
+          name: {{ .Values.LABEL }}-mariadb-config
       - name: mariadb-secrets-vol
         secret:
-          secretName: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb-secret
+          secretName: {{ .Values.LABEL }}-mariadb-secret
   # ensures persistent volumes end up on the same pod
   volumeClaimTemplates:
   - metadata:

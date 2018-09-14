@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb
+  name: {{ .Values.LABEL }}-mariadb
   labels:
-    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
-    endpoint.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    mariadb: {{ .Values.LABEL }}
+    endpoint.mariadb: {{ .Values.LABEL }}
 spec:
   ports:
   - name: maxscale-readwrite
@@ -14,24 +14,24 @@ spec:
     port: 4008
     targetPort: 4008
   selector:
-    maxscale.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    maxscale.mariadb: {{ .Values.LABEL }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-mxs
+  name: {{ .Values.LABEL }}-mdb-mxs
   labels:
-    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
-    maxscale.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    mariadb: {{ .Values.LABEL }}
+    maxscale.mariadb: {{ .Values.LABEL }}
 spec:
   selector:
     matchLabels:
-      maxscale.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+      maxscale.mariadb: {{ .Values.LABEL }}
   replicas: {{ .Values.INITIAL_COUNT_MAXSCALE }}
   template:
     metadata:
       labels:
-        maxscale.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+        maxscale.mariadb: {{ .Values.LABEL }}
     spec:
       initContainers:
       - name: init-maxscale
@@ -51,7 +51,7 @@ spec:
       containers:
       - image: nastybuff/alpine
         command: ["/bin/sh"]
-        args: ["-c", "cd /root; node ./client.js maxscale {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state"]
+        args: ["-c", "cd /root; node ./client.js maxscale {{ .Values.LABEL }}-mdb-state"]
         imagePullPolicy: IfNotPresent
         name: state
         volumeMounts:
@@ -78,7 +78,7 @@ spec:
         emptyDir: {}
       - name: mariadb-configtemplate-vol
         configMap:
-          name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb-config
+          name: {{ .Values.LABEL }}-mariadb-config
       - name: mariadb-secrets-vol
         secret:
-          secretName: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb-secret
+          secretName: {{ .Values.LABEL }}-mariadb-secret

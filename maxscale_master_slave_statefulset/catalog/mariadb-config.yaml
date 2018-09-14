@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb-config
+  name: {{ .Values.LABEL }}-mariadb-config
   labels:
-    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    mariadb: {{ .Values.LABEL }}
 data:
   init-configurations.sh: |
 {{ tpl (.Files.Get "config/init-configurations.sh") . | indent 4 }}

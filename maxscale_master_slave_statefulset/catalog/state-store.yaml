@@ -1,13 +1,13 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state
+  name: {{ .Values.LABEL }}-mdb-state
   labels:
-    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
-    state-store.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    mariadb: {{ .Values.LABEL }}
+    state-store.mariadb: {{ .Values.LABEL }}
 spec:
   selector:
-    state-store.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    state-store.mariadb: {{ .Values.LABEL }}
   ports:
   - protocol: TCP
     port: 80
@@ -15,19 +15,19 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-state
+  name: {{ .Values.LABEL }}-mdb-state
   labels:
-    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
-    state-store.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    mariadb: {{ .Values.LABEL }}
+    state-store.mariadb: {{ .Values.LABEL }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      state-store.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+      state-store.mariadb: {{ .Values.LABEL }}
   template:
     metadata:
       labels:
-        state-store.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+        state-store.mariadb: {{ .Values.LABEL }}
     spec:
       containers:
       - image: nastybuff/alpine
@@ -43,5 +43,5 @@ spec:
       volumes:
       - name: mariadb-configtemplate-vol
         configMap:
-          name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb-config
+          name: {{ .Values.LABEL }}-mariadb-config
       restartPolicy: Always
