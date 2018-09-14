@@ -88,19 +88,29 @@ function parse_options() {
 function expand_templates() {
     # copy template files to a temp directory
     TEMPDIR=$(mktemp -d)
-    cp -r "$DIR/templates" "$TEMPDIR"
+    cp -r "$DIR/catalog" "$TEMPDIR"
+    cp -r "$DIR/config" "$TEMPDIR"
+    # cp -r "$DIR/state-store" "$TEMPDIR"
 
-    for filename in $TEMPDIR/templates/*.yaml; do
-        sed -e "s/{{MARIADB-LABEL}}/$LABEL/g" \
-            -e "s/{{MARIADB-VOLUME-SIZE}}/$VOLSIZE/g" \
-            -e "s/{{ADMIN_USERNAME}}/$(echo -n $DBUSER | base64)/g" \
-            -e "s/{{ADMIN_PASSWORD}}/$(echo -n $DBPWD | base64)/g" \
-            -e "s/{{REPLICATION_USERNAME}}/$(echo -n $REPLUSER | base64)/g" \
-            -e "s/{{REPLICATION_PASSWORD}}/$(echo -n $REPLPWD | base64)/g" \
-            -i '' $filename
+    TEMPLATE="$TEMPDIR/catalog"
+    # STATE_STORE="$TEMPDIR/state-store"
+    CONFIG="$TEMPDIR/config"
+
+    INITIAL_COUNT_MAXSCALE=2
+    INITIAL_COUNT_TX=3
+
+    for filename in $TEMPLATE/*.yaml; do
+        sed -e "s/{{ .Values.APP_NAME }}/$APP/g" \
+            -e "s/{{ .Values.ENV_NAME }}/$ENV/g" \
+            -e "s/{{ .Values.MARIADB_VOLUME_SIZE }}/$VOLSIZE/g" \
+            -e "s/{{ .Values.ADMIN_USERNAME | b64enc }}/$(echo -n $DBUSER | base64)/g" \
+            -e "s/{{ .Values.ADMIN_PASSWORD | b64enc }}/$(echo -n $DBPWD | base64)/g" \
+            -e "s/{{ .Values.REPLICATION_USERNAME | b64enc }}/$(echo -n $REPLUSER | base64)/g" \
+            -e "s/{{ .Values.REPLICATION_PASSWORD | b64enc }}/$(echo -n $REPLPWD | base64)/g" \
+            -e "s/{{ .Values.INITIAL_COUNT_MAXSCALE }}/$INITIAL_COUNT_MAXSCALE/g" \
+            -e "s/{{ .Values.INITIAL_COUNT_TX }}/$INITIAL_COUNT_TX/g" \
+            -i $filename
     done
-
-    TEMPLATE="$TEMPDIR/templates"
 }
 
 parse_options "$@"
@@ -112,7 +122,7 @@ KUBECTL=kubectl
 if [ "$DELETE" == "yes" ]; then
    set -e
 
-   $KUBECTL delete svc,sts,deployment,secret -l mariadb=$LABEL
+   $KUBECTL delete svc,sts,deployment,secret,configmap -l mariadb=$LABEL
    $KUBECTL delete pvc -l server.mariadb=$LABEL
 
    exit 0
@@ -121,17 +131,18 @@ fi
 expand_templates
 
 if [ "$DRY_RUN" == "" ]; then
-   $KUBECTL delete configmap mariadb-config 2> /dev/null
+   $KUBECTL delete configmap $LABEL-mariadb-config 2> /dev/null
 fi
 
 set -e
 
 # compress the state store in order for it to fit in a config map
-tar czf "$TEMPLATE"/config/state-store.tar.gz -C "$TEMPLATE"/config/state-store .
-rm -R -f "$TEMPLATE"/config/state-store
+# tar czf "$CONFIG"/state-store.tar.gz -C "$STATE_STORE" .
+# rm -R -f "$STATE_STORE"
 
 # create configmaps for the configurations of the two types of service
-$KUBECTL create configmap mariadb-config --from-file="$TEMPLATE"/config/ $DRY_RUN
+$KUBECTL create configmap $LABEL-mariadb-config --from-file="$CONFIG"
+$KUBECTL label configmap $LABEL-mariadb-config mariadb=$LABEL
 if [ "$DRY_RUN" != "" ]; then
    echo "---"
 fi
