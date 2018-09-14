@@ -2,36 +2,36 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb
+  name: {{ .Values.LABEL }}-mariadb
   labels:
-    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
-    endpoint.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    mariadb: {{ .Values.LABEL }}
+    endpoint.mariadb: {{ .Values.LABEL }}
 spec:
   ports:
   - name: mariadb
     port: 3306
     targetPort: 3306
   selector:
-    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    mariadb: {{ .Values.LABEL }}
 ---   
 # a StatefulSet for the master/slave cluster 
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mdb-ms
+  name: {{ .Values.LABEL }}-mdb-ms
   labels:
-    mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
-    server.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+    mariadb: {{ .Values.LABEL }}
+    server.mariadb: {{ .Values.LABEL }}
 spec:
   selector:
     matchLabels:
-      server.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
-  serviceName: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb
+      server.mariadb: {{ .Values.LABEL }}
+  serviceName: {{ .Values.LABEL }}-mariadb
   replicas: 1
   template:
     metadata:
       labels:
-        server.mariadb: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}
+        server.mariadb: {{ .Values.LABEL }}
     spec:
       initContainers:
       # simulate a state store client to bootstrap self as active master
@@ -105,10 +105,10 @@ spec:
         emptyDir: {}
       - name: mariadb-configtemplate-vol
         configMap:
-          name: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb-config
+          name: {{ .Values.LABEL }}-mariadb-config
       - name: mariadb-secrets-vol
         secret:
-          secretName: {{ .Values.APP_NAME }}-{{ .Values.ENV_NAME }}-mariadb-secret
+          secretName: {{ .Values.LABEL }}-mariadb-secret
   # ensures persistent volumes end up on the same pod
   volumeClaimTemplates:
   - metadata:

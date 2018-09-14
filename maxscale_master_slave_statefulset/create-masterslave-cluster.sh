@@ -102,6 +102,7 @@ function expand_templates() {
     for filename in $TEMPLATE/*.yaml; do
         sed -e "s/{{ .Values.APP_NAME }}/$APP/g" \
             -e "s/{{ .Values.ENV_NAME }}/$ENV/g" \
+            -e "s/{{ .Values.LABEL }}/$LABEL/g" \
             -e "s/{{ .Values.MARIADB_VOLUME_SIZE }}/$VOLSIZE/g" \
             -e "s/{{ .Values.ADMIN_USERNAME | b64enc }}/$(echo -n $DBUSER | base64)/g" \
             -e "s/{{ .Values.ADMIN_PASSWORD | b64enc }}/$(echo -n $DBPWD | base64)/g" \
