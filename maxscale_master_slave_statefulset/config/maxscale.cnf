@@ -39,8 +39,8 @@ auto_rejoin=true
 [Read-Only-Service]
 type=service
 router=readconnroute
-user={{ .Values.REPLICATION_USERNAME}}
-passwd={{ .Values.REPLICATION_PASSWORD}}
+user={{ .Values.REPLICATION_USERNAME }}
+passwd={{ .Values.REPLICATION_PASSWORD }}
 router_options=slave
 
 # ReadWriteSplit documentation:
@@ -49,8 +49,8 @@ router_options=slave
 [Read-Write-Service]
 type=service
 router=readwritesplit
-user={{ .Values.REPLICATION_USERNAME}}
-passwd={{ .Values.REPLICATION_PASSWORD}}
+user={{ .Values.REPLICATION_USERNAME }}
+passwd={{ .Values.REPLICATION_PASSWORD }}
 master_failure_mode=error_on_write
 
 [MaxInfo]
