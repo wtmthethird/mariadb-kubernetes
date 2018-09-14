@@ -6,10 +6,10 @@ metadata:
     mariadb: {{ .Values.LABEL }}
 data:
   init-configurations.sh: |
-{{ tpl (.Files.Get "config/init-configurations.sh") . | indent 4 }}
+{{ .Files.Get "config/init-configurations.sh" | indent 4 }}
 
   start-mariadb-instance.sh: |
-{{ tpl (.Files.Get "config/start-mariadb-instance.sh") . | indent 4 }}
+{{ .Files.Get "config/start-mariadb-instance.sh" | indent 4 }}
 
   maxscale.cnf: |
 {{ tpl (.Files.Get "config/maxscale.cnf") . | indent 4 }}
