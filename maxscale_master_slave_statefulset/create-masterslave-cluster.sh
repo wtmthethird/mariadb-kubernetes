@@ -10,6 +10,7 @@ function print_usage() {
     echo "Required options: "
     echo "         -a <application name>"
     echo "         -e <environment name>"
+    echo "         -id <id, integer>"
     echo ""
     echo "<application name>-<environment name> will be prepended to kubernetes instance names"
     echo ""
@@ -52,6 +53,11 @@ function parse_options() {
         shift
         shift
         ;;
+        (-id)
+        ID="$2"
+        shift
+        shift
+        ;;
         (-u|--db-user)
         DBUSER="$2"
         shift
@@ -89,7 +95,11 @@ function parse_options() {
        print_usage
     fi
 
-    LABEL="$APP-$ENV"
+    if [[ -z "$ID" ]]; then
+       print_usage
+    fi
+
+    LABEL="$APP-$ENV-$ID"
 }
 
 function expand_templates() {
@@ -109,6 +119,7 @@ function expand_templates() {
     for filename in $TEMPLATE/*.yaml; do
         sed -e "s/{{ .Values.APP_NAME }}/$APP/g" \
             -e "s/{{ .Values.ENV_NAME }}/$ENV/g" \
+            -e "s/{{ .Values.ID }}/$ID/g" \
             -e "s/{{ .Values.LABEL }}/$LABEL/g" \
             -e "s/{{ .Values.MARIADB_VOLUME_SIZE }}/$VOLSIZE/g" \
             -e "s/{{ .Values.ADMIN_USERNAME | b64enc }}/$(echo -n $DBUSER | base64)/g" \
@@ -148,7 +159,7 @@ if [ "$DELETE" == "yes" ]; then
    set -e
 
    $KUBECTL delete svc,sts,deployment,secret,configmap -l mariadb=$LABEL
-   $KUBECTL delete pvc -l server.mariadb=$LABEL
+   $KUBECTL delete pvc -l mariadb=$LABEL
 
    exit 0
 fi

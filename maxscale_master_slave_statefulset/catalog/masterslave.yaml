@@ -25,12 +25,14 @@ metadata:
 spec:
   selector:
     matchLabels:
+      mariadb: {{ .Values.LABEL }}
       server.mariadb: {{ .Values.LABEL }}
   serviceName: {{ .Values.LABEL }}-mdb-clust
   replicas: {{ .Values.INITIAL_COUNT_TX }}
   template:
     metadata:
       labels:
+        mariadb: {{ .Values.LABEL }}
         server.mariadb: {{ .Values.LABEL }}
     spec:
       initContainers:
@@ -122,6 +124,9 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: data
+      labels:
+        mariadb: {{ .Values.LABEL }}
+        server.mariadb: {{ .Values.LABEL }}
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:
