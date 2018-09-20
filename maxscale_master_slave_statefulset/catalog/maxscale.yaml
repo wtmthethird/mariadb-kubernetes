@@ -26,11 +26,13 @@ metadata:
 spec:
   selector:
     matchLabels:
+      mariadb: {{ .Values.LABEL }}
       maxscale.mariadb: {{ .Values.LABEL }}
   replicas: {{ .Values.INITIAL_COUNT_MAXSCALE }}
   template:
     metadata:
       labels:
+        mariadb: {{ .Values.LABEL }}
         maxscale.mariadb: {{ .Values.LABEL }}
     spec:
       initContainers:

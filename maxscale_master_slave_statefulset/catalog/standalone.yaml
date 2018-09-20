@@ -25,6 +25,7 @@ metadata:
 spec:
   selector:
     matchLabels:
+      mariadb: {{ .Values.LABEL }}
       server.mariadb: {{ .Values.LABEL }}
   serviceName: {{ .Values.LABEL }}-mariadb
   replicas: 1
@@ -32,6 +33,7 @@ spec:
     metadata:
       labels:
         server.mariadb: {{ .Values.LABEL }}
+        mariadb: {{ .Values.LABEL }}
     spec:
       initContainers:
       # simulate a state store client to bootstrap self as active master
@@ -113,6 +115,9 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: data
+      labels:
+        mariadb: {{ .Values.LABEL }}
+        server.mariadb: {{ .Values.LABEL }}
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:
