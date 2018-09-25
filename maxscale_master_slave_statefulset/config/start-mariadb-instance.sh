@@ -1,5 +1,4 @@
 #!/usr/bin/bash
-#
 # Copyright (C) 2018, MariaDB Corporation
 # 
 # Starts and initializes a MariaDB master or slave instance
