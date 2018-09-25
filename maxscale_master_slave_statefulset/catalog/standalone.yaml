@@ -1,4 +1,9 @@
-# Headless service for stable DNS entries for StatefulSet members
+# Copyright (C) 2018, MariaDB Corporation
+#
+# Defines a staandalone configuration in a StatefulSet behind. The number of 
+# replicas should always be 1.
+
+# External service
 apiVersion: v1
 kind: Service
 metadata:
@@ -12,7 +17,7 @@ spec:
     port: 3306
     targetPort: 3306
   selector:
-    mariadb: {{ .Values.LABEL }}
+    server.mariadb: {{ .Values.LABEL }}
 ---   
 # a StatefulSet for the master/slave cluster 
 apiVersion: apps/v1

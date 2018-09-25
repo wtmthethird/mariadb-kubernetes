@@ -1,5 +1,6 @@
 #!/bin/sh
-# 2018 (C) MariaDB Corporation
+# Copyright (C) 2018, MariaDB Corporation
+#
 # This script customizes templates based on the parameters passed to a command-line tool
 # the path to the target directory needs to be passed as first argument
 

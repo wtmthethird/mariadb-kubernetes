@@ -1,3 +1,7 @@
+# Copyright (C) 2018, MariaDB Corporation
+#
+# Defines a Kubernetes helm chart for master/slave deployments
+
 apiVersion: v1
 appVersion: "1.0"
 description: A Helm chart for Kubernetes
