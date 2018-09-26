@@ -12,7 +12,7 @@ metadata:
   name: {{ .Values.LABEL }}-mariadb
   labels:
     mariadb: {{ .Values.LABEL }}
-    endpoint.mariadb: {{ .Values.LABEL }}
+    entrypoint.mariadb: {{ .Values.LABEL }}
 spec:
   ports:
   - name: maxscale-readwrite
