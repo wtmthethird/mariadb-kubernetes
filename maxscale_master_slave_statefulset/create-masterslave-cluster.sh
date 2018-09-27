@@ -99,7 +99,8 @@ function parse_options() {
        print_usage
     fi
 
-    LABEL="$APP-$ENV-$ID"
+    LABEL="$APP-$ENV"
+    MARIADB_ID="$ID"
 }
 
 function expand_templates() {
@@ -158,8 +159,8 @@ fi
 if [ "$DELETE" == "yes" ]; then
    set -e
 
-   $KUBECTL delete svc,sts,deployment,secret,configmap -l mariadb=$LABEL
-   $KUBECTL delete pvc -l mariadb=$LABEL
+   $KUBECTL delete svc,sts,deployment,secret,configmap -l mariadb=$LABEL,mariadb.id=$ID
+   $KUBECTL delete pvc -l mariadb=$LABEL,mariadb.id=$ID
 
    exit 0
 fi
@@ -167,7 +168,7 @@ fi
 expand_templates
 
 if [ "$DRY_RUN" == "" ]; then
-   $KUBECTL delete configmap $LABEL-mariadb-config 2> /dev/null
+   $KUBECTL delete configmap -l mariadb=$LABEL,mariadb.id=$ID 2> /dev/null
 fi
 
 set -e
@@ -179,6 +180,7 @@ set -e
 # create configmaps for the configurations of the two types of service
 $KUBECTL create configmap $LABEL-mariadb-config --from-file="$CONFIG"
 $KUBECTL label configmap $LABEL-mariadb-config mariadb=$LABEL
+$KUBECTL label configmap $LABEL-mariadb-config mariadb.id=$ID
 if [ "$DRY_RUN" != "" ]; then
    echo "---"
 fi

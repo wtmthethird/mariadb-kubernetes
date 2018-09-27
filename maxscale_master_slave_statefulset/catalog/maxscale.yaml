@@ -12,6 +12,7 @@ metadata:
   name: {{ .Values.LABEL }}-mariadb
   labels:
     mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
     entrypoint.mariadb: {{ .Values.LABEL }}
 spec:
   ports:
@@ -30,6 +31,7 @@ metadata:
   name: {{ .Values.LABEL }}-mdb-mxs
   labels:
     mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
     maxscale.mariadb: {{ .Values.LABEL }}
 spec:
   selector:

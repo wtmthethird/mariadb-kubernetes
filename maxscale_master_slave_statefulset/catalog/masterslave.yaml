@@ -12,6 +12,7 @@ metadata:
   name: {{ .Values.LABEL }}-mdb-clust
   labels:
     mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
 spec:
   ports:
   - name: mariadb
@@ -28,6 +29,7 @@ metadata:
   name: {{ .Values.LABEL }}-mdb-ms
   labels:
     mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
     server.mariadb: {{ .Values.LABEL }}
 spec:
   selector:
@@ -133,6 +135,7 @@ spec:
       name: data
       labels:
         mariadb: {{ .Values.LABEL }}
+        mariadb.id: "{{ .Values.ID }}"
         server.mariadb: {{ .Values.LABEL }}
     spec:
       accessModes: ["ReadWriteOnce"]

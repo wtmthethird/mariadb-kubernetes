@@ -10,6 +10,7 @@ metadata:
   name: {{ .Values.LABEL }}-mariadb
   labels:
     mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
     entrypoint.mariadb: {{ .Values.LABEL }}
 spec:
   ports:
@@ -26,6 +27,7 @@ metadata:
   name: {{ .Values.LABEL }}-mdb-ms
   labels:
     mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
     server.mariadb: {{ .Values.LABEL }}
 spec:
   selector:
