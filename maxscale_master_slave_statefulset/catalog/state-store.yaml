@@ -15,6 +15,7 @@ metadata:
   name: {{ .Values.LABEL }}-mdb-state
   labels:
     mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
     state-store.mariadb: {{ .Values.LABEL }}
 spec:
   selector:
@@ -29,6 +30,7 @@ metadata:
   name: {{ .Values.LABEL }}-mdb-state
   labels:
     mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
     state-store.mariadb: {{ .Values.LABEL }}
 spec:
   replicas: 1

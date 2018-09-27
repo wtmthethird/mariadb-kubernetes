@@ -8,6 +8,7 @@ metadata:
   name: {{ .Values.LABEL }}-mariadb-config
   labels:
     mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
 data:
   init-configurations.sh: |
 {{ .Files.Get "config/init-configurations.sh" | indent 4 }}

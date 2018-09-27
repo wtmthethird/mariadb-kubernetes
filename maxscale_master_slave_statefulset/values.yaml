@@ -1,6 +1,7 @@
 APP_NAME: test
 ENV_NAME: test
 LABEL: test-test
+ID: 0
 ADMIN_USERNAME: admin
 ADMIN_PASSWORD: test
 REPLICATION_USERNAME: repl
@@ -8,4 +9,4 @@ REPLICATION_PASSWORD: test
 MARIADB_VOLUME_SIZE: 256Mi
 INITIAL_COUNT_MAXSCALE: 2
 INITIAL_COUNT_TX: 3
-catalog: masterslave
+catalog: standalone
