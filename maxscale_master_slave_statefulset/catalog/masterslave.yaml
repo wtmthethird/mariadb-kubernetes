@@ -35,6 +35,7 @@ spec:
   selector:
     matchLabels:
       mariadb: {{ .Values.LABEL }}
+      mariadb.id: "{{ .Values.ID }}"
       server.mariadb: {{ .Values.LABEL }}
   serviceName: {{ .Values.LABEL }}-mdb-clust
   replicas: {{ .Values.INITIAL_COUNT_TX }}
@@ -42,6 +43,7 @@ spec:
     metadata:
       labels:
         mariadb: {{ .Values.LABEL }}
+        mariadb.id: "{{ .Values.ID }}"
         server.mariadb: {{ .Values.LABEL }}
     spec:
       initContainers:

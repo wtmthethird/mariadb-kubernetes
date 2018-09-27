@@ -33,6 +33,7 @@ spec:
   selector:
     matchLabels:
       mariadb: {{ .Values.LABEL }}
+      mariadb.id: "{{ .Values.ID }}"
       server.mariadb: {{ .Values.LABEL }}
   serviceName: {{ .Values.LABEL }}-mariadb
   replicas: 1
@@ -40,6 +41,7 @@ spec:
     metadata:
       labels:
         server.mariadb: {{ .Values.LABEL }}
+        mariadb.id: "{{ .Values.ID }}"
         mariadb: {{ .Values.LABEL }}
     spec:
       initContainers:
@@ -124,6 +126,7 @@ spec:
       name: data
       labels:
         mariadb: {{ .Values.LABEL }}
+        mariadb.id: "{{ .Values.ID }}"
         server.mariadb: {{ .Values.LABEL }}
     spec:
       accessModes: ["ReadWriteOnce"]
