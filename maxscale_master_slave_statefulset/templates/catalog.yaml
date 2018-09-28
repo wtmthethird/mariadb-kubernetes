@@ -1,17 +1,25 @@
 {{ if eq .Values.catalog "standalone" }} 
-{{ tpl (.Files.Get "catalog/mariadb-config.yaml") . }}
+{{ tpl (.Files.Get "catalog/tx/mariadb-config.yaml") . }}
 ---
-{{ tpl (.Files.Get "catalog/mariadb-secret.yaml") . }}
+{{ tpl (.Files.Get "catalog/tx/mariadb-secret.yaml") . }}
 ---
-{{ tpl (.Files.Get "catalog/standalone.yaml") . }}
-{{ else }}
-{{ tpl (.Files.Get "catalog/mariadb-config.yaml") . }}
+{{ tpl (.Files.Get "catalog/tx/standalone.yaml") . }}
+{{ else if eq .Values.catalog "maserlsave" }}
+{{ tpl (.Files.Get "catalog/tx/mariadb-config.yaml") . }}
 ---
-{{ tpl (.Files.Get "catalog/mariadb-secret.yaml") . }}
+{{ tpl (.Files.Get "catalog/tx/mariadb-secret.yaml") . }}
 ---
-{{ tpl (.Files.Get "catalog/masterslave.yaml") . }}
+{{ tpl (.Files.Get "catalog/tx/masterslave.yaml") . }}
 ---
-{{ tpl (.Files.Get "catalog/maxscale.yaml") . }}
+{{ tpl (.Files.Get "catalog/tx/maxscale.yaml") . }}
 ---
-{{ tpl (.Files.Get "catalog/state-store.yaml") . }}
+{{ tpl (.Files.Get "catalog/tx/state-store.yaml") . }}
+{{ else if eq .Values.catalog "galera" }}
+{{ tpl (.Files.Get "catalog/galera/galera.yaml") . }}
+---
+{{ tpl (.Files.Get "catalog/galera/mariadb-secret.yaml") . }}
+---
+{{ tpl (.Files.Get "catalog/galera/maxscale.yaml") . }}
+---
+{{ tpl (.Files.Get "catalog/galera/mariadb-config.yaml") . }}
 {{ end }}

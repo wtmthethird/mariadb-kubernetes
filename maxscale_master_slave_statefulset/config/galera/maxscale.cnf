@@ -1,0 +1,85 @@
+[maxscale]
+threads=auto
+substitute_variables=true
+# new entries
+admin_enabled=true
+admin_host=0.0.0.0 
+
+[MaxAdmin-Service]
+type=service
+router=cli
+
+[MaxAdmin-Listener]
+type=listener
+service=MaxAdmin-Service
+protocol=maxscaled
+socket=default
+
+[MariaDB-Monitor]
+type=monitor
+module=galeramon
+user={{ .Values.REPLICATION_USERNAME }}
+passwd={{ .Values.REPLICATION_PASSWORD }}
+monitor_interval=2000
+disable_master_failback=1
+
+[qla]
+type=filter
+module=qlafilter
+filebase=/tmp/SqlQueryLog
+
+[fetch]
+type=filter
+module=regexfilter
+match=fetch
+replace=select
+
+[Read-Write-Service]
+type=service
+router=readwritesplit
+user={{ .Values.REPLICATION_USERNAME }}
+passwd={{ .Values.REPLICATION_PASSWORD }}
+max_slave_connections=100%
+router_options=slave_selection_criteria=LEAST_CURRENT_OPERATIONS
+
+[Read-Only-Service]
+type=service
+router=readconnroute
+router_options=synced
+user={{ .Values.REPLICATION_USERNAME }}
+passwd={{ .Values.REPLICATION_PASSWORD }}
+
+[MaxInfo]
+type=service
+router=maxinfo
+user=monitor
+passwd=monitor
+
+[Debug Interface]
+type=service
+router=debugcli
+
+[CLI]
+type=service
+router=cli
+
+# Listener definitions for the services
+# Listeners represent the ports the services will listen on.
+
+[Read-Only-Listener]
+type=listener
+service=Read-Only-Service
+protocol=mariadbclient
+port=3307
+
+[Read-Write-Listener]
+type=listener
+service=Read-Write-Service
+protocol=mariadbclient
+port=3308
+
+[MaxInfo JSON Listener]
+type=listener
+service=MaxInfo
+protocol=HTTPD
+port=8003

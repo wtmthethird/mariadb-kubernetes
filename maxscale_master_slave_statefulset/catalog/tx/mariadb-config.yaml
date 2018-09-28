@@ -11,16 +11,16 @@ metadata:
     mariadb.id: "{{ .Values.ID }}"
 data:
   init-configurations.sh: |
-{{ .Files.Get "config/init-configurations.sh" | indent 4 }}
+{{ .Files.Get "config/tx/init-configurations.sh" | indent 4 }}
 
   start-mariadb-instance.sh: |
-{{ .Files.Get "config/start-mariadb-instance.sh" | indent 4 }}
+{{ .Files.Get "config/tx/start-mariadb-instance.sh" | indent 4 }}
 
   maxscale.cnf: |
-{{ tpl (.Files.Get "config/maxscale.cnf") . | indent 4 }}
+{{ tpl (.Files.Get "config/tx/maxscale.cnf") . | indent 4 }}
 
   users.sql: |
-{{ tpl (.Files.Get "config/users.sql") . | indent 4 }}
+{{ tpl (.Files.Get "config/tx/users.sql") . | indent 4 }}
 
   replication.sql: |
-{{ tpl (.Files.Get "config/replication.sql") . | indent 4 }}
+{{ tpl (.Files.Get "config/tx/replication.sql") . | indent 4 }}

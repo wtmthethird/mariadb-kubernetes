@@ -1,0 +1,134 @@
+# Headless service for stable DNS entries for StatefulSet members
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.LABEL }}-mdb-clust
+  labels:
+    mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
+spec:
+  ports:
+  - name: mariadb
+    port: 3306
+    targetPort: 3306
+  - name: maxscale-readwrite
+    port: 3307
+    targetPort: 3307
+  - name: maxscale-read
+    port: 3308
+    targetPort: 3308
+  - name: maxscale-api
+    port: 8989
+    targetPort: 8989
+  clusterIP: None
+  selector:
+    mariadb: {{ .Values.LABEL }}
+---
+# a StatefulSet for the galera cluster
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.LABEL }}-galera
+spec:
+  selector:
+    matchLabels:
+      mariadb: {{ .Values.LABEL }}
+      mariadb.id: "{{ .Values.ID }}"
+      server.mariadb: {{ .Values.LABEL }}
+  serviceName: {{ .Values.LABEL }}-mdb-clust
+  replicas: {{ .Values.INITIAL_COUNT_TX }}
+  template:
+    metadata:
+      labels:
+        mariadb: {{ .Values.LABEL }}
+        mariadb.id: "{{ .Values.ID }}"
+        server.mariadb: {{ .Values.LABEL }}
+    spec:
+      initContainers:
+      - name: init-galera
+        image: mariadb:10.3
+        command:
+          - bash
+          - /mnt/config-template/init-configurations.sh
+          - /etc/parsed-config
+        volumeMounts:
+          - mountPath: /mnt/secrets
+            name: mariadb-secrets-vol
+            readOnly: true
+          - mountPath: /mnt/config-template
+            name: mariadb-galera-configmap-vol
+          - mountPath: /etc/parsed-config
+            name: mariadb-config-vol
+
+      containers:
+      - name: galera
+        image: alphatoxic/mariadb-kubernetes@sha256:5c25b68d97108c9269249a7132fe524e25b6ff7ce53ee4a36bd6410a906cb22d
+        command:
+        - bash
+        - ./entrypoint.sh
+        ports:
+        - containerPort: 3306
+        - containerPort: 22
+        - containerPort: 4567
+        - containerPort: 4568
+        - containerPort: 4444
+        - containerPort: 9100
+        resources: {}
+        volumeMounts:
+        - name: mariadb-galera-data-vol
+          mountPath: /var/lib/mysql
+        - name: mariadb-galera-log-vol
+          mountPath: /var/log/mysql
+        - name: mariadb-config-vol
+          mountPath: /entrypoint.sh
+          subPath: entrypoint.sh
+        - name: mariadb-config-vol
+          mountPath: /mdb-config/50-server.cnf
+          subPath: 50-server.cnf
+        - name: mariadb-config-vol
+          mountPath: /register-instance-pkg.pl
+          subPath: register-instance-pkg.pl
+
+        livenessProbe:
+          exec:
+            command: ["mysqladmin", "ping"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            # Check we can execute queries over TCP (skip-networking is off).
+            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          timeoutSeconds: 1
+
+      volumes:
+      - name: shared-data-log
+        emptyDir: {}
+      - name: mariadb-galera-configmap-vol
+        configMap:
+          name: {{ .Values.LABEL }}-mariadb-galera-config
+      - name: mariadb-config-vol
+        emptyDir: {}
+      - name: mariadb-secrets-vol
+        secret:
+          secretName: {{ .Values.LABEL }}-mariadb-secret
+
+      restartPolicy: Always
+
+  volumeClaimTemplates:
+  - metadata:
+      name: mariadb-galera-data-vol
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 200Mi
+  - metadata:
+      name: mariadb-galera-log-vol
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 200Mi

@@ -110,9 +110,9 @@ function expand_templates() {
     cp -r "$DIR/config" "$TEMPDIR"
     # cp -r "$DIR/state-store" "$TEMPDIR"
 
-    TEMPLATE="$TEMPDIR/catalog"
+    TEMPLATE="$TEMPDIR/catalog/tx"
     # STATE_STORE="$TEMPDIR/state-store"
-    CONFIG="$TEMPDIR/config"
+    CONFIG="$TEMPDIR/config/tx"
 
     INITIAL_COUNT_MAXSCALE=2
     INITIAL_COUNT_TX=3
@@ -142,7 +142,7 @@ KUBECTL=kubectl
 # ensure template exists
 yaml_cnt=0
 for yaml in $(grep -E "^$CATALOG=" "$DIR"/catalog/catalog | sed -e "s/^$CATALOG=//g"); do
-    if [ ! -f "$DIR/catalog/$yaml" ]; then
+    if [ ! -f "$DIR/catalog/tx/$yaml" ]; then
        >&2 echo "YAML template $yaml does not exist"
        print_usage
     fi

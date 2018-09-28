@@ -1,0 +1,29 @@
+# Copyright (C) 2018, MariaDB Corporation
+#
+# Stores cluste-wide initialization scripts in a config map
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.LABEL }}-mariadb-galera-config
+  labels:
+    mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
+data:
+  init-configurations.sh: |
+{{ tpl (.Files.Get "config/galera/init-configurations.sh") . | indent 4 }}
+
+  50-server.cnf: |
+{{ tpl (.Files.Get "config/galera/50-server.cnf") . | indent 4 }}
+
+  entrypoint.sh: |
+{{ tpl (.Files.Get "config/galera/entrypoint.sh") . | indent 4 }}
+
+  maxscale.cnf: |
+{{ tpl (.Files.Get "config/galera/maxscale.cnf") . | indent 4 }}
+
+  register-instance-pkg.pl: |
+{{ tpl (.Files.Get "config/galera/register-instance-pkg.pl") . | indent 4 }}
+
+  register-instance.pl: |
+{{ tpl (.Files.Get "config/galera/register-instance.pl") . | indent 4 }}
