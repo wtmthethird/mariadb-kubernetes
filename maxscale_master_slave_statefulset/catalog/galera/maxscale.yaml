@@ -1,3 +1,11 @@
+# Copyright (C) 2018, MariaDB Corporation
+#
+# Defines a HA maxscale cluster as a deployment fronted
+# by a load-balancer service that is also the client endpoint. 
+# Only one MaxScale instance will be active at a time.
+# Allows scaling the number of MaxScale instances by running:
+# kubectl scale deployment <lavel>-mdb-mxs --replicas=<number of instances> 
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -18,19 +26,18 @@ spec:
     maxscale.mariadb: {{ .Values.LABEL }}
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
-  name: {{ .Values.LABEL }}-maxscale
+  name: {{ .Values.LABEL }}-mdb-mxs
   labels:
     mariadb: {{ .Values.LABEL }}
     mariadb.id: "{{ .Values.ID }}"
-    entrypoint.mariadb: {{ .Values.LABEL }}
+    maxscale.mariadb: {{ .Values.LABEL }}
 spec:
   selector:
     matchLabels:
       mariadb: {{ .Values.LABEL }}
       maxscale.mariadb: {{ .Values.LABEL }}
-  serviceName: {{ .Values.LABEL }}-mdb-clust
   replicas: {{ .Values.INITIAL_COUNT_MAXSCALE }}
   template:
     metadata:
@@ -44,18 +51,24 @@ spec:
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
-          - /etc/maxscale-cfg
-          - "2"
+          - maxscale
         volumeMounts:
           - mountPath: /mnt/secrets
             name: mariadb-secrets-vol
             readOnly: true
           - mountPath: /mnt/config-template
-            name: maxscale-configmap-vol
+            name: mariadb-configtemplate-vol
           - mountPath: /etc/maxscale-cfg
             name: mariadb-config-vol
-      
       containers:
+      - image: nastybuff/alpine
+        command: ["/bin/sh"]
+        args: ["-c", "cd /root; node ./client.js maxscale {{ .Values.LABEL }}-mdb-state"]
+        imagePullPolicy: IfNotPresent
+        name: state
+        volumeMounts:
+          - name: mariadb-configtemplate-vol
+            mountPath: /mnt/config-template
       - args:
         - maxscale
         - -d
@@ -65,23 +78,19 @@ spec:
         image: mariadb/maxscale:latest
         name: maxscale
         ports:
-        - containerPort: 3307
-        - containerPort: 8989
-        - containerPort: 3308
+        - containerPort: 4006
+        - containerPort: 4008
         resources: {}
         volumeMounts:
-        - mountPath: /etc/maxscale-cfg/maxscale.cnf
+        - mountPath: /etc/maxscale-cfg
           name: mariadb-config-vol
-          subPath: maxscale.cnf
       restartPolicy: Always
       volumes:
-      - name: maxscale-configmap-vol
-        configMap:
-          name: {{ .Values.LABEL }}-mariadb-galera-config
       - name: mariadb-config-vol
         emptyDir: {}
+      - name: mariadb-configtemplate-vol
+        configMap:
+          name: {{ .Values.LABEL }}-mariadb-config
       - name: mariadb-secrets-vol
         secret:
           secretName: {{ .Values.LABEL }}-mariadb-secret
-
-

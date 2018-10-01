@@ -1,3 +1,10 @@
+# Copyright (C) 2018, MariaDB Corporation
+#
+# Defines a galera configuration in a StatefulSet behind 
+# a headless service. Allows scaling the number of server instances
+# by using:
+# kubectl scale sts <label>-mdb-galera --replicas=<number of server instances>
+
 # Headless service for stable DNS entries for StatefulSet members
 apiVersion: v1
 kind: Service
@@ -11,24 +18,19 @@ spec:
   - name: mariadb
     port: 3306
     targetPort: 3306
-  - name: maxscale-readwrite
-    port: 3307
-    targetPort: 3307
-  - name: maxscale-read
-    port: 3308
-    targetPort: 3308
-  - name: maxscale-api
-    port: 8989
-    targetPort: 8989
   clusterIP: None
   selector:
     mariadb: {{ .Values.LABEL }}
----
-# a StatefulSet for the galera cluster
+---   
+# a StatefulSet for the galera cluster 
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Values.LABEL }}-galera
+  name: {{ .Values.LABEL }}-mdb-galera
+  labels:
+    mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
+    server.mariadb: {{ .Values.LABEL }}
 spec:
   selector:
     matchLabels:
@@ -45,50 +47,56 @@ spec:
         server.mariadb: {{ .Values.LABEL }}
     spec:
       initContainers:
+      # runs a state store client to determine the IP of the active galera
+      - name: init-get-galera
+        image: nastybuff/alpine
+        command: ["/bin/sh"]
+        args: ["-c", "cd /root; node ./client.js mariadb-init {{ .Values.LABEL }}-mdb-state /mnt/config-map"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /mnt/config-map
+            name: mariadb-config-vol
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
+      # runs an initialization script to prepare the correct startup configuration
       - name: init-galera
         image: mariadb:10.3
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
-          - /etc/parsed-config
+          - galera
         volumeMounts:
           - mountPath: /mnt/secrets
             name: mariadb-secrets-vol
             readOnly: true
+          - name: mariadb-entrypoint-vol
+            mountPath: /docker-entrypoint-initdb.d
           - mountPath: /mnt/config-template
-            name: mariadb-galera-configmap-vol
-          - mountPath: /etc/parsed-config
+            name: mariadb-configtemplate-vol
+          - mountPath: /mnt/config-map
             name: mariadb-config-vol
-
       containers:
-      - name: galera
-        image: alphatoxic/mariadb-kubernetes@sha256:5c25b68d97108c9269249a7132fe524e25b6ff7ce53ee4a36bd6410a906cb22d
-        command:
+      - command:
+        # start a mariadb instance
         - bash
-        - ./entrypoint.sh
+        - /mnt/config-map/start-mariadb-instance.sh 
+        env:
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "Y"
+        image: mariadb:10.3
+        name: mariadb-server
         ports:
         - containerPort: 3306
-        - containerPort: 22
-        - containerPort: 4567
-        - containerPort: 4568
-        - containerPort: 4444
-        - containerPort: 9100
         resources: {}
         volumeMounts:
-        - name: mariadb-galera-data-vol
+        - name: mariadb-entrypoint-vol
+          mountPath: /docker-entrypoint-initdb.d
+        - name: mariadb-config-vol
+          mountPath: /mnt/config-map
+        # a permanent volume for data storage
+        - name: data
           mountPath: /var/lib/mysql
-        - name: mariadb-galera-log-vol
-          mountPath: /var/log/mysql
-        - name: mariadb-config-vol
-          mountPath: /entrypoint.sh
-          subPath: entrypoint.sh
-        - name: mariadb-config-vol
-          mountPath: /mdb-config/50-server.cnf
-          subPath: 50-server.cnf
-        - name: mariadb-config-vol
-          mountPath: /register-instance-pkg.pl
-          subPath: register-instance-pkg.pl
-
+          subPath: mysql
         livenessProbe:
           exec:
             command: ["mysqladmin", "ping"]
@@ -102,33 +110,37 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 2
           timeoutSeconds: 1
-
+      # runs a state store client to ensure the state is being maitained
+      - name: state
+        image: nastybuff/alpine
+        command: ["/bin/sh"]
+        args: ["-c", "cd /root; node ./client.js mariadb {{ .Values.LABEL }}-mdb-state /mnt/config-map"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
+      restartPolicy: Always
       volumes:
-      - name: shared-data-log
+      - name: mariadb-entrypoint-vol 
         emptyDir: {}
-      - name: mariadb-galera-configmap-vol
-        configMap:
-          name: {{ .Values.LABEL }}-mariadb-galera-config
       - name: mariadb-config-vol
         emptyDir: {}
+      - name: mariadb-configtemplate-vol
+        configMap:
+          name: {{ .Values.LABEL }}-mariadb-config
       - name: mariadb-secrets-vol
         secret:
           secretName: {{ .Values.LABEL }}-mariadb-secret
-
-      restartPolicy: Always
-
+  # ensures persistent volumes end up on the same pod
   volumeClaimTemplates:
   - metadata:
-      name: mariadb-galera-data-vol
+      name: data
+      labels:
+        mariadb: {{ .Values.LABEL }}
+        mariadb.id: "{{ .Values.ID }}"
+        server.mariadb: {{ .Values.LABEL }}
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: 200Mi
-  - metadata:
-      name: mariadb-galera-log-vol
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      resources:
-        requests:
-          storage: 200Mi
+          storage: {{ .Values.MARIADB_VOLUME_SIZE }}

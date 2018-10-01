@@ -1,9 +1,14 @@
+# Copyright (C) 2018, MariaDB Corporation
+#
+# Defines a starting configuration for MaxScale instances
+
 [maxscale]
 threads=auto
-substitute_variables=true
-# new entries
+# enable the REST API
 admin_enabled=true
-admin_host=0.0.0.0 
+admin_host=127.0.0.1
+# always start as passive, then upgrade to active based on the state store's response
+passive=true 
 
 [MaxAdmin-Service]
 type=service
@@ -15,53 +20,48 @@ service=MaxAdmin-Service
 protocol=maxscaled
 socket=default
 
+# Monitor for the servers
+# This will keep MaxScale aware of the state of the servers.
+# MySQL Monitor documentation:
+# https://github.com/mariadb-corporation/MaxScale/blob/2.2/Documentation/Monitors/MariaDB-Monitor.md
+
 [MariaDB-Monitor]
 type=monitor
-module=galeramon
+module=mariadbmon
 user={{ .Values.REPLICATION_USERNAME }}
 passwd={{ .Values.REPLICATION_PASSWORD }}
 monitor_interval=2000
-disable_master_failback=1
+auto_failover=true
+auto_rejoin=true
 
-[qla]
-type=filter
-module=qlafilter
-filebase=/tmp/SqlQueryLog
+# Service definitions
+# Service Definition for a read-only service and a read/write splitting service.
 
-[fetch]
-type=filter
-module=regexfilter
-match=fetch
-replace=select
+# ReadConnRoute documentation:
+# https://github.com/mariadb-corporation/MaxScale/blob/2.2/Documentation/Routers/ReadConnRoute.md
+
+[Read-Only-Service]
+type=service
+router=readconnroute
+user={{ .Values.REPLICATION_USERNAME }}
+passwd={{ .Values.REPLICATION_PASSWORD }}
+router_options=slave
+
+# ReadWriteSplit documentation:
+# https://github.com/mariadb-corporation/MaxScale/blob/2.2/Documentation/Routers/ReadWriteSplit.md
 
 [Read-Write-Service]
 type=service
 router=readwritesplit
 user={{ .Values.REPLICATION_USERNAME }}
 passwd={{ .Values.REPLICATION_PASSWORD }}
-max_slave_connections=100%
-router_options=slave_selection_criteria=LEAST_CURRENT_OPERATIONS
-
-[Read-Only-Service]
-type=service
-router=readconnroute
-router_options=synced
-user={{ .Values.REPLICATION_USERNAME }}
-passwd={{ .Values.REPLICATION_PASSWORD }}
+master_failure_mode=error_on_write
 
 [MaxInfo]
 type=service
 router=maxinfo
 user=monitor
-passwd=monitor
-
-[Debug Interface]
-type=service
-router=debugcli
-
-[CLI]
-type=service
-router=cli
+passwd=monitor 
 
 # Listener definitions for the services
 # Listeners represent the ports the services will listen on.
@@ -69,14 +69,14 @@ router=cli
 [Read-Only-Listener]
 type=listener
 service=Read-Only-Service
-protocol=mariadbclient
-port=3307
+protocol=MySQLClient
+port=4008
 
 [Read-Write-Listener]
 type=listener
 service=Read-Write-Service
-protocol=mariadbclient
-port=3308
+protocol=MySQLClient
+port=4006
 
 [MaxInfo JSON Listener]
 type=listener

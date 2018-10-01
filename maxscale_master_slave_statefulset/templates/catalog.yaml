@@ -22,4 +22,6 @@
 {{ tpl (.Files.Get "catalog/galera/maxscale.yaml") . }}
 ---
 {{ tpl (.Files.Get "catalog/galera/mariadb-config.yaml") . }}
+---
+{{ tpl (.Files.Get "catalog/galera/state-store.yaml") . }}
 {{ end }}

@@ -1,0 +1,62 @@
+# Copyright (C) 2018, MariaDB Corporation
+#
+# Defines a state store server that maintains (through heartbeat calls 
+# from each pod in a MariaDB cluster on a regular scheduled interval):
+#   * a list of MaxScale instances
+#   * a list of MariaDB server instances
+#   * a reference to a single active MaxScale instance
+#   * a reference to a single Master instance
+# 
+# The number of replicas should be exactly 1.
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.LABEL }}-mdb-state
+  labels:
+    mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
+    state-store.mariadb: {{ .Values.LABEL }}
+spec:
+  selector:
+    state-store.mariadb: {{ .Values.LABEL }}
+  ports:
+  - protocol: TCP
+    port: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.LABEL }}-mdb-state
+  labels:
+    mariadb: {{ .Values.LABEL }}
+    mariadb.id: "{{ .Values.ID }}"
+    state-store.mariadb: {{ .Values.LABEL }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      mariadb: {{ .Values.LABEL }}
+      state-store.mariadb: {{ .Values.LABEL }}
+  template:
+    metadata:
+      labels:
+        mariadb: {{ .Values.LABEL }}
+        state-store.mariadb: {{ .Values.LABEL }}
+    spec:
+      containers:
+      - image: nastybuff/alpine
+        command: ["/bin/sh"]
+        args: ["-c", "cd /root; node ./server.js"]
+        imagePullPolicy: IfNotPresent
+        name: state-store
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - name: mariadb-configtemplate-vol
+            mountPath: /mnt/config-template
+      volumes:
+      - name: mariadb-configtemplate-vol
+        configMap:
+          name: {{ .Values.LABEL }}-mariadb-config
+      restartPolicy: Always
