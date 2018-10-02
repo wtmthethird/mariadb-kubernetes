@@ -47,7 +47,7 @@ spec:
     spec:
       initContainers:
       - name: init-maxscale
-        image: mariadb:10.3
+        image: {{ .Values.MARIADB_SERVER_IMAGE }}
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
@@ -61,7 +61,7 @@ spec:
           - mountPath: /etc/maxscale-cfg
             name: mariadb-config-vol
       containers:
-      - image: nastybuff/alpine
+      - image: {{ .Values.MARIADB_STATESTORE_IMAGE }}
         command: ["/bin/sh"]
         args: ["-c", "cd /root; node ./client.js maxscale {{ .Values.LABEL }}-mdb-state"]
         imagePullPolicy: IfNotPresent
@@ -75,7 +75,7 @@ spec:
         - -U
         - maxscale
         - --configdir=/etc/maxscale-cfg
-        image: mariadb/maxscale:latest
+        image: {{ .Values.MARIADB_MAXSCALE_IMAGE }}
         name: maxscale
         ports:
         - containerPort: 4006

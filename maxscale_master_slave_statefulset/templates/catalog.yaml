@@ -1,10 +1,10 @@
-{{ if eq .Values.catalog "standalone" }} 
+{{ if eq .Values.TEMPLATE "standalone" }} 
 {{ tpl (.Files.Get "catalog/mariadb-config.yaml") . }}
 ---
 {{ tpl (.Files.Get "catalog/mariadb-secret.yaml") . }}
 ---
 {{ tpl (.Files.Get "catalog/standalone.yaml") . }}
-{{ else }}
+{{ else if eq .Values.TEMPLATE "masterslave" }}
 {{ tpl (.Files.Get "catalog/mariadb-config.yaml") . }}
 ---
 {{ tpl (.Files.Get "catalog/mariadb-secret.yaml") . }}

@@ -28,8 +28,8 @@ socket=default
 [MariaDB-Monitor]
 type=monitor
 module=mariadbmon
-user={{ .Values.REPLICATION_USERNAME }}
-passwd={{ .Values.REPLICATION_PASSWORD }}
+user=<<REPLICATION_USERNAME>>
+passwd=<<REPLICATION_PASSWORD>>
 monitor_interval=2000
 auto_failover=true
 auto_rejoin=true
@@ -43,8 +43,8 @@ auto_rejoin=true
 [Read-Only-Service]
 type=service
 router=readconnroute
-user={{ .Values.REPLICATION_USERNAME }}
-passwd={{ .Values.REPLICATION_PASSWORD }}
+user=<<REPLICATION_USERNAME>>
+passwd=<<REPLICATION_PASSWORD>>
 router_options=slave
 
 # ReadWriteSplit documentation:
@@ -53,8 +53,8 @@ router_options=slave
 [Read-Write-Service]
 type=service
 router=readwritesplit
-user={{ .Values.REPLICATION_USERNAME }}
-passwd={{ .Values.REPLICATION_PASSWORD }}
+user=<<REPLICATION_USERNAME>>
+passwd=<<REPLICATION_PASSWORD>>
 master_failure_mode=error_on_write
 
 [MaxInfo]

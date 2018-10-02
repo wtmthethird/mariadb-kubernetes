@@ -38,7 +38,7 @@ spec:
       mariadb.id: "{{ .Values.ID }}"
       server.mariadb: {{ .Values.LABEL }}
   serviceName: {{ .Values.LABEL }}-mdb-clust
-  replicas: {{ .Values.INITIAL_COUNT_TX }}
+  replicas: {{ .Values.INITIAL_COUNT_SERVER }}
   template:
     metadata:
       labels:
@@ -60,7 +60,7 @@ spec:
             name: mariadb-configtemplate-vol
       # runs an initialization script to prepare the correct startup configuration
       - name: init-masterslave
-        image: mariadb:10.3
+        image: {{ .Values.MARIADB_SERVER_IMAGE }}
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
@@ -83,7 +83,7 @@ spec:
         env:
         - name: MYSQL_ALLOW_EMPTY_PASSWORD
           value: "Y"
-        image: mariadb:10.3
+        image: {{ .Values.MARIADB_SERVER_IMAGE }}
         name: mariadb-server
         ports:
         - containerPort: 3306
@@ -143,4 +143,4 @@ spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: {{ .Values.MARIADB_VOLUME_SIZE }}
+          storage: {{ .Values.VOLUME_SIZE }}
