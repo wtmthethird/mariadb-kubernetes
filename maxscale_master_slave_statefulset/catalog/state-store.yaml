@@ -43,7 +43,7 @@ spec:
         state-store.mariadb: {{ .Values.LABEL }}
     spec:
       containers:
-      - image: nastybuff/alpine
+      - image: {{ .Values.MARIADB_STATESTORE_IMAGE }}
         command: ["/bin/sh"]
         args: ["-c", "cd /root; node ./server.js"]
         imagePullPolicy: IfNotPresent

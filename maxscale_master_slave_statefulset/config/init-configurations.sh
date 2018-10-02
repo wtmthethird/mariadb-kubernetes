@@ -6,10 +6,10 @@
 
 function expand_templates() {
     sed -e "s/<<MASTER_HOST>>/$MASTER_HOST/g" \
-        -e "s/{{ .Values.ADMIN_USERNAME }}/$ADMIN_USER/g" \
-        -e "s/{{ .Values.ADMIN_PASSWORD }}/$ADMIN_PWD/g" \
-        -e "s/{{ .Values.REPLICATION_USERNAME }}/$REPL_USER/g" \
-        -e "s/{{ .Values.REPLICATION_PASSWORD }}/$REPL_PWD/g" \
+        -e "s/<<ADMIN_USERNAME>>/$ADMIN_USER/g" \
+        -e "s/<<ADMIN_PASSWORD>>/$ADMIN_PWD/g" \
+        -e "s/<<REPLICATION_USERNAME>>/$REPL_USER/g" \
+        -e "s/<<REPLICATION_PASSWORD>>/$REPL_PWD/g" \
         $1
 }
 

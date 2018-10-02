@@ -43,7 +43,7 @@ spec:
       initContainers:
       # simulate a state store client to bootstrap self as active master
       - name: init-get-master
-        image: node:alpine
+        image: {{ .Values.MARIADB_SERVER_IMAGE }}
         command: ["/bin/sh"]
         args: ["-c", "echo 'localhost' > /mnt/config-map/master"]
         imagePullPolicy: IfNotPresent
@@ -54,7 +54,7 @@ spec:
             name: mariadb-configtemplate-vol
       # runs an initialization script to prepare the correct startup configuration
       - name: init-masterslave
-        image: mariadb:10.3
+        image: {{ .Values.MARIADB_SERVER_IMAGE }}
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
@@ -77,7 +77,7 @@ spec:
         env:
         - name: MYSQL_ALLOW_EMPTY_PASSWORD
           value: "Y"
-        image: mariadb:10.3
+        image: {{ .Values.MARIADB_SERVER_IMAGE }}
         name: mariadb-server
         ports:
         - containerPort: 3306
@@ -127,5 +127,5 @@ spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: {{ .Values.MARIADB_VOLUME_SIZE }}
+          storage: {{ .Values.VOLUME_SIZE }}
  
