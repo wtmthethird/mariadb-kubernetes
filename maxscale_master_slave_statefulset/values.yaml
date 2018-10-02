@@ -1,6 +1,7 @@
 APP_NAME: mariadb
 ENV_NAME: helm
 LABEL: mariadb-helm
+ID: 0
 ADMIN_USERNAME: admin
 ADMIN_PASSWORD: 5LVTpbGE2cGFtw69
 REPLICATION_USERNAME: repl
