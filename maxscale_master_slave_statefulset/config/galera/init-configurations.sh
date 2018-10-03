@@ -41,7 +41,6 @@ else
         else
             # a first run on a slave
             # mysqldump -h $MASTER_HOST -u $REPL_USER -p$REPL_PWD --all-databases -A -Y --add-drop-database --add-drop-table --add-drop-trigger --allow-keywords --compact --master-data --lock-all-tables -F --flush-privileges --gtid -Q > /docker-entrypoint-initdb.d/slave.sql
-            expand_templates /mnt/config-template/replication.sql >> /docker-entrypoint-initdb.d/init.sql
             expand_templates /mnt/config-template/galera.cnf >> /mnt/config-map/galera.cnf
             sed -r -i "s/<<CLUSTER_ADDRESS>>/$MASTER_HOST/" /mnt/config-map/galera.cnf
         fi

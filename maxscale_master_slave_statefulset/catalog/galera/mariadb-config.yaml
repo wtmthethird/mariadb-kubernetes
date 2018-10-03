@@ -24,6 +24,3 @@ data:
 
   users.sql: |
 {{ tpl (.Files.Get "config/galera/users.sql") . | indent 4 }}
-
-  replication.sql: |
-{{ tpl (.Files.Get "config/galera/replication.sql") . | indent 4 }}
