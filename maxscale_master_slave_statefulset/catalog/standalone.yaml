@@ -10,7 +10,7 @@ metadata:
   name: {{ .Values.LABEL }}-mariadb
   labels:
     mariadb: {{ .Values.LABEL }}
-    mariadb.id: "{{ .Values.ID }}"
+    id.mariadb: "{{ .Values.ID }}"
     entrypoint.mariadb: {{ .Values.LABEL }}
 spec:
   ports:
@@ -27,13 +27,13 @@ metadata:
   name: {{ .Values.LABEL }}-mdb-ms
   labels:
     mariadb: {{ .Values.LABEL }}
-    mariadb.id: "{{ .Values.ID }}"
+    id.mariadb: "{{ .Values.ID }}"
     server.mariadb: {{ .Values.LABEL }}
 spec:
   selector:
     matchLabels:
       mariadb: {{ .Values.LABEL }}
-      mariadb.id: "{{ .Values.ID }}"
+      id.mariadb: "{{ .Values.ID }}"
       server.mariadb: {{ .Values.LABEL }}
   serviceName: {{ .Values.LABEL }}-mariadb
   replicas: 1
@@ -41,7 +41,7 @@ spec:
     metadata:
       labels:
         server.mariadb: {{ .Values.LABEL }}
-        mariadb.id: "{{ .Values.ID }}"
+        id.mariadb: "{{ .Values.ID }}"
         mariadb: {{ .Values.LABEL }}
     spec:
       initContainers:
@@ -126,7 +126,7 @@ spec:
       name: data
       labels:
         mariadb: {{ .Values.LABEL }}
-        mariadb.id: "{{ .Values.ID }}"
+        id.mariadb: "{{ .Values.ID }}"
         server.mariadb: {{ .Values.LABEL }}
     spec:
       accessModes: ["ReadWriteOnce"]

@@ -159,8 +159,8 @@ fi
 if [ "$DELETE" == "yes" ]; then
    set -e
 
-   $KUBECTL delete svc,sts,deployment,secret,configmap -l mariadb=$LABEL,mariadb.id=$ID
-   $KUBECTL delete pvc -l mariadb=$LABEL,mariadb.id=$ID
+   $KUBECTL delete svc,sts,deployment,secret,configmap -l mariadb=$LABEL,id.mariadb=$ID
+   $KUBECTL delete pvc -l mariadb=$LABEL,id.mariadb=$ID
 
    exit 0
 fi
@@ -168,7 +168,7 @@ fi
 expand_templates
 
 if [ "$DRY_RUN" == "" ]; then
-   $KUBECTL delete configmap -l mariadb=$LABEL,mariadb.id=$ID 2> /dev/null
+   $KUBECTL delete configmap -l mariadb=$LABEL,id.mariadb=$ID 2> /dev/null
 fi
 
 set -e
@@ -179,8 +179,9 @@ set -e
 
 # create configmaps for the configurations of the two types of service
 $KUBECTL create configmap $LABEL-mariadb-config --from-file="$CONFIG"
-$KUBECTL label configmap $LABEL-mariadb-config mariadb=$LABEL
-$KUBECTL label configmap $LABEL-mariadb-config mariadb.id=$ID
+# IMPORTANT: we want the config map to be shared amongst all instances, removing labeling below
+# $KUBECTL label configmap $LABEL-mariadb-config mariadb=$LABEL
+# $KUBECTL label configmap $LABEL-mariadb-config id.mariadb=$ID
 if [ "$DRY_RUN" != "" ]; then
    echo "---"
 fi
