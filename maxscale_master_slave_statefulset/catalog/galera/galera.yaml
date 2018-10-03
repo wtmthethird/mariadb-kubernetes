@@ -49,7 +49,7 @@ spec:
       initContainers:
       # runs a state store client to determine the IP of the active galera
       - name: init-get-galera
-        image: nastybuff/alpine
+        image: mariadb/statestore:0.0.1
         command: ["/bin/sh"]
         args: ["-c", "cd /root; node ./client.js mariadb-init {{ .Values.LABEL }}-mdb-state /mnt/config-map"]
         imagePullPolicy: IfNotPresent
@@ -112,7 +112,7 @@ spec:
           timeoutSeconds: 1
       # runs a state store client to ensure the state is being maitained
       - name: state
-        image: nastybuff/alpine
+        image: mariadb/statestore:0.0.1
         command: ["/bin/sh"]
         args: ["-c", "cd /root; node ./client.js mariadb {{ .Values.LABEL }}-mdb-state /mnt/config-map"]
         imagePullPolicy: IfNotPresent

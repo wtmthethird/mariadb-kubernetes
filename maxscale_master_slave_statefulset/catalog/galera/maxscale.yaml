@@ -61,7 +61,7 @@ spec:
           - mountPath: /etc/maxscale-cfg
             name: mariadb-config-vol
       containers:
-      - image: nastybuff/alpine
+      - image: mariadb/statestore:0.0.1
         command: ["/bin/sh"]
         args: ["-c", "cd /root; node ./client.js maxscale {{ .Values.LABEL }}-mdb-state"]
         imagePullPolicy: IfNotPresent
