@@ -1,0 +1,136 @@
+# Copyright (C) 2018, MariaDB Corporation
+#
+# Defines a staandalone configuration in a StatefulSet behind. The number of 
+# replicas should always be 1.
+
+# External service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-mariadb
+  labels:
+    mariadb: {{ .Release.Name }}
+    id.mariadb: "{{ .Values.ID }}"
+    entrypoint.mariadb: {{ .Release.Name }}
+spec:
+  ports:
+  - name: mariadb
+    port: 3306
+    targetPort: 3306
+  selector:
+    server.mariadb: {{ .Release.Name }}
+---   
+# a StatefulSet for the master/slave cluster 
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-mdb-ms
+  labels:
+    mariadb: {{ .Release.Name }}
+    id.mariadb: "{{ .Values.ID }}"
+    server.mariadb: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      mariadb: {{ .Release.Name }}
+      id.mariadb: "{{ .Values.ID }}"
+      server.mariadb: {{ .Release.Name }}
+  serviceName: {{ .Release.Name }}-mariadb
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        server.mariadb: {{ .Release.Name }}
+        id.mariadb: "{{ .Values.ID }}"
+        mariadb: {{ .Release.Name }}
+    spec:
+      initContainers:
+      # simulate a state store client to bootstrap self as active master
+      - name: init-get-master
+        image: {{ .Values.MARIADB_SERVER_IMAGE }}
+        command: ["/bin/sh"]
+        args: ["-c", "echo 'localhost' > /mnt/config-map/master"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /mnt/config-map
+            name: mariadb-config-vol
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
+      # runs an initialization script to prepare the correct startup configuration
+      - name: init-masterslave
+        image: {{ .Values.MARIADB_SERVER_IMAGE }}
+        command:
+          - bash
+          - /mnt/config-template/init-configurations.sh
+          - masterslave
+        volumeMounts:
+          - mountPath: /mnt/secrets
+            name: mariadb-secrets-vol
+            readOnly: true
+          - name: mariadb-entrypoint-vol
+            mountPath: /docker-entrypoint-initdb.d
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
+          - mountPath: /mnt/config-map
+            name: mariadb-config-vol
+      containers:
+      - command:
+        # start a mariadb instance
+        - bash
+        - /mnt/config-map/start-mariadb-instance.sh 
+        env:
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "Y"
+        image: {{ .Values.MARIADB_SERVER_IMAGE }}
+        name: mariadb-server
+        ports:
+        - containerPort: 3306
+        resources: {}
+        volumeMounts:
+        - name: mariadb-entrypoint-vol
+          mountPath: /docker-entrypoint-initdb.d
+        - name: mariadb-config-vol
+          mountPath: /mnt/config-map
+        # a permanent volume for data storage
+        - name: data
+          mountPath: /var/lib/mysql
+          subPath: mysql
+        livenessProbe:
+          exec:
+            command: ["mysqladmin", "ping"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            # Check we can execute queries over TCP (skip-networking is off).
+            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          timeoutSeconds: 1
+      restartPolicy: Always
+      volumes:
+      - name: mariadb-entrypoint-vol 
+        emptyDir: {}
+      - name: mariadb-config-vol
+        emptyDir: {}
+      - name: mariadb-configtemplate-vol
+        configMap:
+          name: {{ .Release.Name }}-mariadb-config
+      - name: mariadb-secrets-vol
+        secret:
+          secretName: {{ .Release.Name }}-mariadb-secret
+  # ensures persistent volumes end up on the same pod
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        mariadb: {{ .Release.Name }}
+        id.mariadb: "{{ .Values.ID }}"
+        server.mariadb: {{ .Release.Name }}
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: {{ .Values.VOLUME_SIZE }}
+ 

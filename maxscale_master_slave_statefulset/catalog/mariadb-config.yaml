@@ -1,0 +1,23 @@
+# Copyright (C) 2018, MariaDB Corporation
+#
+# Stores cluste-wide initialization scripts in a config map
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-mariadb-config
+data:
+  init-configurations.sh: |
+{{ .Files.Get "config/init-configurations.sh" | indent 4 }}
+
+  start-mariadb-instance.sh: |
+{{ .Files.Get "config/start-mariadb-instance.sh" | indent 4 }}
+
+  maxscale.cnf: |
+{{ tpl (.Files.Get "config/maxscale.cnf") . | indent 4 }}
+
+  users.sql: |
+{{ tpl (.Files.Get "config/users.sql") . | indent 4 }}
+
+  replication.sql: |
+{{ tpl (.Files.Get "config/replication.sql") . | indent 4 }}

@@ -1,0 +1,9 @@
+# Copyright (C) 2018, MariaDB Corporation
+#
+# Defines a Kubernetes helm chart for master/slave deployments
+
+apiVersion: v1
+appVersion: "1.0"
+description: A MariaDB helm chart for Kubernetes that supports deploying multiple enterprise configurations
+name: mariadb-enterprise
+version: 0.1.1
