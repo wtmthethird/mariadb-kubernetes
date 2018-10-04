@@ -12,14 +12,14 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Values.LABEL }}-mdb-state
+  name: {{ .Release.Name }}-mdb-state
   labels:
-    mariadb: {{ .Values.LABEL }}
+    mariadb: {{ .Release.Name }}
     id.mariadb: "{{ .Values.ID }}"
-    state-store.mariadb: {{ .Values.LABEL }}
+    state-store.mariadb: {{ .Release.Name }}
 spec:
   selector:
-    state-store.mariadb: {{ .Values.LABEL }}
+    state-store.mariadb: {{ .Release.Name }}
   ports:
   - protocol: TCP
     port: 80
@@ -27,22 +27,22 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.LABEL }}-mdb-state
+  name: {{ .Release.Name }}-mdb-state
   labels:
-    mariadb: {{ .Values.LABEL }}
+    mariadb: {{ .Release.Name }}
     id.mariadb: "{{ .Values.ID }}"
-    state-store.mariadb: {{ .Values.LABEL }}
+    state-store.mariadb: {{ .Release.Name }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      mariadb: {{ .Values.LABEL }}
-      state-store.mariadb: {{ .Values.LABEL }}
+      mariadb: {{ .Release.Name }}
+      state-store.mariadb: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        mariadb: {{ .Values.LABEL }}
-        state-store.mariadb: {{ .Values.LABEL }}
+        mariadb: {{ .Release.Name }}
+        state-store.mariadb: {{ .Release.Name }}
     spec:
       containers:
       - image: {{ .Values.MARIADB_STATESTORE_IMAGE }}
@@ -58,5 +58,5 @@ spec:
       volumes:
       - name: mariadb-configtemplate-vol
         configMap:
-          name: {{ .Values.LABEL }}-mariadb-config
+          name: {{ .Release.Name }}-mariadb-config
       restartPolicy: Always

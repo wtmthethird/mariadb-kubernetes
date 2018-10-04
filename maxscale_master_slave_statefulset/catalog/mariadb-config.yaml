@@ -5,7 +5,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.LABEL }}-mariadb-config
+  name: {{ .Release.Name }}-mariadb-config
 data:
   init-configurations.sh: |
 {{ .Files.Get "config/init-configurations.sh" | indent 4 }}

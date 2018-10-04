@@ -7,42 +7,42 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.LABEL }}-mariadb
+  name: {{ .Release.Name }}-mariadb
   labels:
-    mariadb: {{ .Values.LABEL }}
+    mariadb: {{ .Release.Name }}
     id.mariadb: "{{ .Values.ID }}"
-    entrypoint.mariadb: {{ .Values.LABEL }}
+    entrypoint.mariadb: {{ .Release.Name }}
 spec:
   ports:
   - name: mariadb
     port: 3306
     targetPort: 3306
   selector:
-    server.mariadb: {{ .Values.LABEL }}
+    server.mariadb: {{ .Release.Name }}
 ---   
 # a StatefulSet for the master/slave cluster 
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Values.LABEL }}-mdb-ms
+  name: {{ .Release.Name }}-mdb-ms
   labels:
-    mariadb: {{ .Values.LABEL }}
+    mariadb: {{ .Release.Name }}
     id.mariadb: "{{ .Values.ID }}"
-    server.mariadb: {{ .Values.LABEL }}
+    server.mariadb: {{ .Release.Name }}
 spec:
   selector:
     matchLabels:
-      mariadb: {{ .Values.LABEL }}
+      mariadb: {{ .Release.Name }}
       id.mariadb: "{{ .Values.ID }}"
-      server.mariadb: {{ .Values.LABEL }}
-  serviceName: {{ .Values.LABEL }}-mariadb
+      server.mariadb: {{ .Release.Name }}
+  serviceName: {{ .Release.Name }}-mariadb
   replicas: 1
   template:
     metadata:
       labels:
-        server.mariadb: {{ .Values.LABEL }}
+        server.mariadb: {{ .Release.Name }}
         id.mariadb: "{{ .Values.ID }}"
-        mariadb: {{ .Values.LABEL }}
+        mariadb: {{ .Release.Name }}
     spec:
       initContainers:
       # simulate a state store client to bootstrap self as active master
@@ -116,18 +116,18 @@ spec:
         emptyDir: {}
       - name: mariadb-configtemplate-vol
         configMap:
-          name: {{ .Values.LABEL }}-mariadb-config
+          name: {{ .Release.Name }}-mariadb-config
       - name: mariadb-secrets-vol
         secret:
-          secretName: {{ .Values.LABEL }}-mariadb-secret
+          secretName: {{ .Release.Name }}-mariadb-secret
   # ensures persistent volumes end up on the same pod
   volumeClaimTemplates:
   - metadata:
       name: data
       labels:
-        mariadb: {{ .Values.LABEL }}
+        mariadb: {{ .Release.Name }}
         id.mariadb: "{{ .Values.ID }}"
-        server.mariadb: {{ .Values.LABEL }}
+        server.mariadb: {{ .Release.Name }}
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:

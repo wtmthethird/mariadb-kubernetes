@@ -128,7 +128,7 @@ function expand_templates() {
             -e "s/{{ .Values.REPLICATION_USERNAME | b64enc }}/$(echo -n $REPLUSER | base64)/g" \
             -e "s/{{ .Values.REPLICATION_PASSWORD | b64enc }}/$(echo -n $REPLPWD | base64)/g" \
             -e "s/{{ .Values.INITIAL_COUNT_MAXSCALE }}/$INITIAL_COUNT_MAXSCALE/g" \
-            -e "s/{{ .Values.INITIAL_COUNT_TX }}/$INITIAL_COUNT_TX/g" \
+            -e "s/{{ .Values.INITIAL_COUNT_SERVER }}/$INITIAL_COUNT_TX/g" \
             -i $filename
     done
 }
