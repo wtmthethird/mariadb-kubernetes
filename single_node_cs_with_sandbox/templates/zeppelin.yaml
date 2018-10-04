@@ -62,7 +62,7 @@ spec:
 
       restartPolicy: Always
       volumes:
-      - name: mariadb-entrypoint-vol 
+      - name: mariadb-entrypoint-vol
         emptyDir: {}
       - name: mariadb-config-vol
         emptyDir: {}
