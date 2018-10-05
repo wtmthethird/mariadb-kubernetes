@@ -1,7 +1,7 @@
 # MariaDB Kubernetes MaxScale Master Slave using StatefulSets
 
 ## Overview
-This directory contains kubernetes stateful set scripts to install a 3 node master slave cluster fronted by an Active/Passive pair of MaxScale nodes. The cluster can be deployed using helm or alternatively using shell / powershell kubectl wrapper scripts. The scripts should be considered alpha quality at this stage and should not be used for production deployments.
+This directory contains kubernetes stateful set scripts to install a 3 node master slave cluster fronted by an Active/Passive pair of MaxScale nodes. The cluster can be deployed using helm or alternatively using shell / powershell kubectl wrapper scripts. The scripts should be considered alpha quality at this stage and is not recommended for production deployments.  
 
 ## Local Kubernetes Installations
 The scripts can be deployed against a cloud kubernetes deployment such as Google Kubernetes Engine or alternatively using one of several local vm based kubernetes frameworks such as minikube for Windows and Mac or microk8s for Ubuntu / Linux.
@@ -14,7 +14,9 @@ The following steps will install microk8s, helm, and configure it for dns, dashb
 ```sh
 sudo snap install microk8s --beta --classic
 sudo snap install helm --classic
+sudo snap install kubectl --classic
 microk8s.enable dns dashboard storage
+helm init
 ```
 
 After installation the kubernetes dashboard application may be accessed at:
@@ -23,7 +25,8 @@ http://localhost:8080/api/v1/namespaces/kube-system/services/https:kubernetes-da
 ### Installing minikube on Windows 10
 - If you are running Windows 10 Professional enable Hyper-V virtualization. For other versions install VirtualBox as the virtualization software.
 - Download minikube for windows from: https://github.com/kubernetes/minikube/releases and rename to minikube.exe and add to a directory in your path.
-- Similarly download kubectl and add to the same directory, using the latest link here: https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl-binary-using-curl
+- Download kubectl and add to the same directory, using the latest link here:https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl-binary-using-curl
+- Download helm and tiller and add to the same directory: https://github.com/helm/helm/releases
 - If you are utilizing Hyper-V, create an external switch in hyper-v virtual switch manager named ExternalSwitch configured to use external networking.
 
 To initialize minikube for VirtualBox:
@@ -39,6 +42,11 @@ minikube start --vm-driver hyperv --hyperv-virtual-switch "ExternalSwitch"
 After installation the kubernetes dashboard application may be accessed by running:
 ```sh
 minikube dashboard
+```
+
+To initialize helm:
+```sh
+helm init
 ```
 
 ### Installing minikube on MacOS X (High Sierra)
@@ -100,7 +108,7 @@ $ minikube stop
 ## Running the Master Slave plus MaxScale Cluster
 
 ### Installing the Cluster with Helm
-Helm provides a simple means of installation and is the recommended approach. First install and configure helm for your platform (https://github.com/helm/helm/releases) and cluster then simply run choosing an appropriate id value to uniquely identify your cluster:
+Helm provides a simple means of installation and is the *recommended* approach. To install the cluster simply run specifying a unique id which is used as the release name as well as name prefix for other objects:
 ```
 $ helm install . --name <id>
 ```
@@ -112,7 +120,7 @@ $ helm list
 
 To remove a helm release:
 ```
-$ helm helm delete <id>
+$ helm delete <id>
 ```
 
 
@@ -139,18 +147,25 @@ To remove the cluster:
 ```
 
 ## Using the cluster
-To access the MaxScale node locally, create a port forward (substitute the appropriate pod name in the port forward command):
+To access the MaxScale node locally, find the ip address of the service:
 ```sh
-kubectl get pod
-kubectl port-forward maxscale-d76cbd47c-sjb4t 4006:4006 4008:4008 8003:8003
+kubectl get services
 ```
-The following ports are mapped to the local host:
+The output will look something like:
+```sh
+NAME            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
+kubernetes      ClusterIP   10.152.183.1     <none>        443/TCP             40m
+msl-mariadb     ClusterIP   10.152.183.135   <none>        4006/TCP,4008/TCP   28m
+msl-mdb-clust   ClusterIP   None             <none>        3306/TCP            28m
+msl-mdb-state   ClusterIP   10.152.183.129   <none>        80/TCP              28m
+```
+
+Use the cluster ip for <prefix>-mariadb as the host to connect to. The following ports are mapped to the local host:
 - 4006: MaxScale ReadWrite Listener
 - 4008: MaxScale ReadOnly Listener
-- 8003: MaxScale REST API
-After this:
+
+After this (the user and password comes from the helm chart values.yaml):
 ```
-curl http://localhost:9195/metrics
-mysql -umaxuser -pmaxpwd -P4006 -h 127.0.0.1
-mysql -umaxuser -pmaxpwd -P4008 -h 127.0.0.1
+mysql -urepl -p5LVTpbGE2cGFtw69 -P4006 -h <cluster-ip>
+mysql -urepl -p5LVTpbGE2cGFtw69 -P4008 -h <cluster-ip>
 ```
