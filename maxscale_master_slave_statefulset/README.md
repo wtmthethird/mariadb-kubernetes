@@ -1,33 +1,19 @@
 # MariaDB Kubernetes MaxScale Master Slave using StatefulSets
-<!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
-
-<!-- code_chunk_output -->
-
-* [Overview](#overview)
-* [Installing microk8s on Linux](#installing-microk8s-on-linux)
-* [Installing minikube on Windows 10 Professional with Hyper-V](#installing-minikube-on-windows-10-professional-with-hyper-v)
-* [Installing minikube on MacOS X (High Sierra)](#installing-minikube-on-macos-x-high-sierra)
-	* [Install Homebrew](#install-homebrew)
-	* [Install Minikube](#install-minikube)
-	* [Start Minikube](#start-minikube)
-* [Running a Master/Slave cluster](#running-a-masterslave-cluster)
-	* [Linux and OSX](#linux-and-osx)
-	* [Windows](#windows)
-* [Cleaning up a Master/Slave cluster](#cleaning-up-a-masterslave-cluster)
 
 ## Overview
 This directory contains kubernetes stateful set scripts to install a 3 node master slave cluster fronted by an Active/Passive pair of MaxScale nodes. The cluster can be deployed using helm or alternatively using shell / powershell kubectl wrapper scripts. The scripts should be considered alpha quality at this stage and should not be used for production deployments.
 
-## Local Kubernetes installations
+## Local Kubernetes Installations
 The scripts can be deployed against a cloud kubernetes deployment such as Google Kubernetes Engine or alternatively using one of several local vm based kubernetes frameworks such as minikube for Windows and Mac or microk8s for Ubuntu / Linux.
 
 ### Installing microk8s on Ubuntu
 **microk8s** is a lightweight kubernetes install that can be installed using the cross platform snap utility but most optimally on Ubuntu.
 
-The following steps will install microk8s and configure it for dns, dashboard, and storage:
+The following steps will install microk8s, helm, and configure it for dns, dashboard, and storage:
 
 ```sh
 sudo snap install microk8s --beta --classic
+sudo snap install helm --classic
 microk8s.enable dns dashboard storage
 ```
 
@@ -111,7 +97,7 @@ To stop the cluster use:
 $ minikube stop
 ```
 
-## Running the Master/Slave plus MaxScale cluster
+## Running the Master Slave plus MaxScale Cluster
 
 ### Installing the Cluster with Helm
 Helm provides a simple means of installation and is the recommended approach. First install and configure helm for your platform (https://github.com/helm/helm/releases) and cluster then simply run choosing an appropriate id value to uniquely identify your cluster:
