@@ -1,0 +1,146 @@
+# Copyright (C) 2018, MariaDB Corporation
+#
+# Defines a master/slave configuration in a StatefulSet behind 
+# a headless service. Allows scaling the number of server instances
+# by using:
+# kubectl scale sts <label>-mdb-ms --replicas=<number of server instances>
+
+# Headless service for stable DNS entries for StatefulSet members
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-mdb-clust
+  labels:
+    mariadb: {{ .Release.Name }}
+    id.mariadb: "{{ .Values.ID }}"
+spec:
+  ports:
+  - name: mariadb
+    port: 3306
+    targetPort: 3306
+  clusterIP: None
+  selector:
+    mariadb: {{ .Release.Name }}
+---   
+# a StatefulSet for the master/slave cluster 
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-mdb-ms
+  labels:
+    mariadb: {{ .Release.Name }}
+    id.mariadb: "{{ .Values.ID }}"
+    server.mariadb: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      mariadb: {{ .Release.Name }}
+      id.mariadb: "{{ .Values.ID }}"
+      server.mariadb: {{ .Release.Name }}
+  serviceName: {{ .Release.Name }}-mdb-clust
+  replicas: {{ .Values.INITIAL_COUNT_SERVER }}
+  template:
+    metadata:
+      labels:
+        mariadb: {{ .Release.Name }}
+        id.mariadb: "{{ .Values.ID }}"
+        server.mariadb: {{ .Release.Name }}
+    spec:
+      initContainers:
+      # runs a state store client to determine the IP of the active master
+      - name: init-get-master
+        image: {{ .Values.MARIADB_STATESTORE_IMAGE }}
+        command: ["/bin/sh"]
+        args: ["-c", "cd /root; node ./client.js mariadb-init {{ .Release.Name }}-mdb-state /mnt/config-map"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /mnt/config-map
+            name: mariadb-config-vol
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
+      # runs an initialization script to prepare the correct startup configuration
+      - name: init-masterslave
+        image: {{ .Values.MARIADB_SERVER_IMAGE }}
+        command:
+          - bash
+          - /mnt/config-template/init-configurations.sh
+          - masterslave
+        volumeMounts:
+          - mountPath: /mnt/secrets
+            name: mariadb-secrets-vol
+            readOnly: true
+          - name: mariadb-entrypoint-vol
+            mountPath: /docker-entrypoint-initdb.d
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
+          - mountPath: /mnt/config-map
+            name: mariadb-config-vol
+      containers:
+      - command:
+        # start a mariadb instance
+        - bash
+        - /mnt/config-map/start-mariadb-instance.sh 
+        env:
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "Y"
+        image: {{ .Values.MARIADB_SERVER_IMAGE }}
+        name: mariadb-server
+        ports:
+        - containerPort: 3306
+        resources: {}
+        volumeMounts:
+        - name: mariadb-entrypoint-vol
+          mountPath: /docker-entrypoint-initdb.d
+        - name: mariadb-config-vol
+          mountPath: /mnt/config-map
+        # a permanent volume for data storage
+        - name: data
+          mountPath: /var/lib/mysql
+          subPath: mysql
+        livenessProbe:
+          exec:
+            command: ["mysqladmin", "ping"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            # Check we can execute queries over TCP (skip-networking is off).
+            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          timeoutSeconds: 1
+      # runs a state store client to ensure the state is being maitained
+      - name: state
+        image: {{ .Values.MARIADB_STATESTORE_IMAGE }}
+        command: ["/bin/sh"]
+        args: ["-c", "cd /root; node ./client.js mariadb {{ .Release.Name }}-mdb-state /mnt/config-map"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
+      restartPolicy: Always
+      volumes:
+      - name: mariadb-entrypoint-vol 
+        emptyDir: {}
+      - name: mariadb-config-vol
+        emptyDir: {}
+      - name: mariadb-configtemplate-vol
+        configMap:
+          name: {{ .Release.Name }}-mariadb-config
+      - name: mariadb-secrets-vol
+        secret:
+          secretName: {{ .Release.Name }}-mariadb-secret
+  # ensures persistent volumes end up on the same pod
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        mariadb: {{ .Release.Name }}
+        id.mariadb: "{{ .Values.ID }}"
+        server.mariadb: {{ .Release.Name }}
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: {{ .Values.VOLUME_SIZE }}
