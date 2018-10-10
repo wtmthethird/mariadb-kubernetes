@@ -13,10 +13,10 @@ cp /mnt/config-map/galera.cnf /etc/mysql/mariadb.conf.d/galera.cnf
 
 # fire up the instance
 if [[ "$MASTER_HOST" == "localhost" ]]; then
-    /usr/local/bin/docker-entrypoint.sh mysqld  --wsrep-new-cluster --log-bin=mariadb-bin --binlog-format=ROW --server-id=$((3000 + $server_id)) --log-slave-updates=1 --gtid-strict-mode=1
+    /usr/local/bin/docker-entrypoint.sh mysqld  --wsrep-new-cluster --log-bin=mariadb-bin --binlog-format=ROW --server-id=$((3000 + $server_id)) --log-slave-updates=1 --gtid-strict-mode=1 --innodb-flush-method=fsync
 else
     # rm -f /var/lib/mysql/galera.cache
     # rm -f /var/lib/mysql/grastate.dat
     # rm -f /var/lib/mysql/gvwstate.dat
-    /usr/local/bin/docker-entrypoint.sh mysqld --log-bin=mariadb-bin --binlog-format=ROW --server-id=$((3000 + $server_id)) --log-slave-updates=1 --gtid-strict-mode=1
+    /usr/local/bin/docker-entrypoint.sh mysqld --log-bin=mariadb-bin --binlog-format=ROW --server-id=$((3000 + $server_id)) --log-slave-updates=1 --gtid-strict-mode=1 --innodb-flush-method=fsync
 fi
