@@ -13,4 +13,4 @@ wsrep_provider_options="gcache.size=300M; gcache.page_size=300M"
 wsrep_cluster_name="{{ .Values.LABEL }}-cluster"
 wsrep_cluster_address="gcomm://<<CLUSTER_ADDRESS>>"
 wsrep_sst_method=mariabackup
-wsrep_sst_auth = {{ .Values.ADMIN_USERNAME }}:{{ .Values.ADMIN_PASSWORD }}
+wsrep_sst_auth = <<ADMIN_USERNAME>>:<<ADMIN_PASSWORD>>
