@@ -10,34 +10,22 @@ metadata:
     mariadb: {{ .Release.Name }}
     id.mariadb: "{{ .Values.ID }}"
 data:
-{{ if or (eq .Values.TEMPLATE "standalone") (eq .Values.TEMPLATE "masterslave") }} 
   init-configurations.sh: |
-{{ .Files.Get "config/init-configurations.sh" | indent 4 }}
+{{ tpl (.Files.Get "config/init-configurations.sh") . | indent 4 }}
 
   start-mariadb-instance.sh: |
-{{ .Files.Get "config/start-mariadb-instance.sh" | indent 4 }}
-
-  maxscale.cnf: |
-{{ tpl (.Files.Get "config/maxscale.cnf") . | indent 4 }}
+{{ tpl (.Files.Get "config/start-mariadb-instance.sh") . | indent 4 }}
 
   users.sql: |
 {{ tpl (.Files.Get "config/users.sql") . | indent 4 }}
 
+  maxscale.cnf: |
+{{ tpl (.Files.Get "config/maxscale.cnf") . | indent 4 }}
+
+{{ if or (eq .Values.TEMPLATE "standalone") (eq .Values.TEMPLATE "masterslave") }}
   replication.sql: |
 {{ tpl (.Files.Get "config/replication.sql") . | indent 4 }}
 {{ else if eq .Values.TEMPLATE "galera" }}
-  init-configurations.sh: |
-{{ .Files.Get "config/init-configurations-galera.sh" | indent 4 }}
-
-  start-mariadb-instance.sh: |
-{{ .Files.Get "config/start-mariadb-instance-galera.sh" | indent 4 }}
-
   galera.cnf: |
 {{ tpl (.Files.Get "config/galera.cnf") . | indent 4 }}
-
-  maxscale.cnf: |
-{{ tpl (.Files.Get "config/maxscale.cnf") . | indent 4 }}
-
-  users.sql: |
-{{ tpl (.Files.Get "config/users.sql") . | indent 4 }}
 {{ end }}
