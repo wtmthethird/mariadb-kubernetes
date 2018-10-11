@@ -1,4 +1,7 @@
+{{ if or (eq .Values.TEMPLATE "standalone") (eq .Values.TEMPLATE "masterslave") }} 
 RESET MASTER;
+{{ end }}
+
 CREATE DATABASE test;
 
 CREATE USER '<<REPLICATION_USERNAME>>'@'127.0.0.1' IDENTIFIED BY '<<REPLICATION_PASSWORD>>';
