@@ -1,4 +1,4 @@
-{{ if eq .Values.TEMPLATE "standalone" }} 
+{{ if eq .Values.TEMPLATE "standalone" }}
 {{ tpl (.Files.Get "catalog/mariadb-config.yaml") . }}
 ---
 {{ tpl (.Files.Get "catalog/mariadb-secret.yaml") . }}

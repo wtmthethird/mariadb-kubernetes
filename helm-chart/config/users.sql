@@ -1,4 +1,4 @@
-{{ if or (eq .Values.TEMPLATE "standalone") (eq .Values.TEMPLATE "masterslave") }} 
+{{ if or (eq .Values.TEMPLATE "standalone") (eq .Values.TEMPLATE "masterslave") }}
 RESET MASTER;
 {{ end }}
 
