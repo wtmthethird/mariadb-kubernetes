@@ -20,7 +20,7 @@ spec:
     targetPort: 3306
   clusterIP: None
   selector:
-    mariadb: {{ .Release.Name }}
+    server.mariadb: {{ .Release.Name }}
 ---   
 # a StatefulSet for the galera cluster 
 apiVersion: apps/v1
