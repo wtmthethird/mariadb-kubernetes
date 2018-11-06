@@ -1,12 +1,49 @@
-ID: 0
-ADMIN_USERNAME: admin
-ADMIN_PASSWORD: 5LVTpbGE2cGFtw69
-REPLICATION_USERNAME: repl
-REPLICATION_PASSWORD: 5LVTpbGE2cGFtw69
-VOLUME_SIZE: 256Mi
-INITIAL_COUNT_MAXSCALE: 2
-INITIAL_COUNT_SERVER: 3
-MARIADB_SERVER_IMAGE: mariadb/server:10.3
-MARIADB_MAXSCALE_IMAGE: mariadb/maxscale:2.2
-MARIADB_STATESTORE_IMAGE: mariadb/statestore:0.0.2
-TEMPLATE: masterslave
+mariadb:
+  # general cluster parameters
+  cluster:
+    id: null
+    topology: masterslave
+    labels:
+    annotations:
+
+  # server parameters
+  server:
+    users:
+      admin:
+        username: admin
+        password: 5LVTpbGE2cGFtw69
+      replication:
+        username: repl
+        password: 5LVTpbGE2cGFtw69
+    storage:
+      class: null
+      size: 256Mi
+    replicas: 3
+    image: mariadb/server:10.3
+    port: 3306
+    resources:
+      requests:
+        cpu: "1000m"
+        memory: "3G"
+      limits:
+        cpu: "3000m"
+        memory: "9G"
+
+# maxscale parameters
+  maxscale:
+    image: mariadb/maxscale:2.2
+    ports:
+      readonly: 4008
+      readwrite: 4006
+    replicas: 2
+    resources:
+      requests:
+        cpu: null
+        memory: null
+      limits:
+        cpu: null
+        memory: null
+
+# statestore parameters
+  statestore:
+    image: mariadb/statestore:0.0.2 

@@ -15,8 +15,10 @@ metadata:
   name: {{ .Release.Name }}-mdb-state
   labels:
     mariadb: {{ .Release.Name }}
-    id.mariadb: "{{ .Values.ID }}"
     state-store.mariadb: {{ .Release.Name }}
+    {{ if .Values.mariadb.cluster.id }}
+    id.mariadb: "{{ .Values.mariadb.cluster.id }}"
+    {{ end }}
 spec:
   selector:
     state-store.mariadb: {{ .Release.Name }}
@@ -30,13 +32,14 @@ metadata:
   name: {{ .Release.Name }}-mdb-state
   labels:
     mariadb: {{ .Release.Name }}
-    id.mariadb: "{{ .Values.ID }}"
     state-store.mariadb: {{ .Release.Name }}
+    {{ if .Values.mariadb.cluster.id }}
+    id.mariadb: "{{ .Values.mariadb.cluster.id }}"
+    {{ end }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      mariadb: {{ .Release.Name }}
       state-store.mariadb: {{ .Release.Name }}
   template:
     metadata:
@@ -45,7 +48,7 @@ spec:
         state-store.mariadb: {{ .Release.Name }}
     spec:
       containers:
-      - image: {{ .Values.MARIADB_STATESTORE_IMAGE }}
+      - image: {{ .Values.mariadb.statestore.image }}
         command: ["/bin/sh"]
         args: ["-c", "cd /root; node ./server.js"]
         imagePullPolicy: IfNotPresent
