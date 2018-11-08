@@ -93,6 +93,7 @@ spec:
         - -U
         - maxscale
         - --configdir=/etc/maxscale-cfg
+        - -lstdout
         image: {{ .Values.mariadb.maxscale.image }}
         name: maxscale
         ports:

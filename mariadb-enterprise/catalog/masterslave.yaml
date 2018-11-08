@@ -67,8 +67,8 @@ spec:
       labels:
         mariadb: {{ .Release.Name }}
         server.mariadb: {{ .Release.Name }}
-        {{- if .Values.mariadb.server.id }}
-        id.mariadb: {{ .Values.mariadb.server.id }}
+        {{- if .Values.mariadb.cluster.id }}
+        id.mariadb: {{ .Values.mariadb.cluster.id }}
         {{- end }}
     spec:
       initContainers:

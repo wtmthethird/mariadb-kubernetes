@@ -1,10 +1,10 @@
 mariadb:
   # general cluster parameters
   cluster:
-    id: null
-    topology: masterslave
-    labels:
-    annotations:
+    id: null                                     # e.g. "1"
+    topology: masterslave                        # possible values "masterslave" or "standalone"
+    labels: null                                 # custom labels to be added to the mariadb service, e.g. for discovery   
+    annotations: null                            # custom annotations to be added to each pod in the cluster
 
   # server parameters
   server:
@@ -16,33 +16,37 @@ mariadb:
         username: repl
         password: 5LVTpbGE2cGFtw69
     storage:
-      class: null
+      class: null                                # e.g. high
       size: 256Mi
     replicas: 3
     image: mariadb/server:10.3
     port: 3306
+    labels: null                                 # custom labels applied to mariadb server pods only
+    annotations: null                            # custom annotations applied to mariadb server pods only
     resources:
       requests:
-        cpu: "1000m"
-        memory: "3G"
+        cpu: null                                # e.g. "1000m"
+        memory: null                             # e.g. "3G"
       limits:
-        cpu: "3000m"
-        memory: "9G"
+        cpu: null                                # e.g. "3000m"
+        memory: null                             # e.g. "9G"
 
 # maxscale parameters
   maxscale:
     image: mariadb/maxscale:2.2
+    labels: null                                 # custom labels applied to maxscale pods only
+    annotations: null                            # custom annotations applied to maxscale pods only
     ports:
       readonly: 4008
       readwrite: 4006
     replicas: 2
     resources:
       requests:
-        cpu: null
-        memory: null
+        cpu: null     # e.g. "1000m"
+        memory: null  # e.g. "3G"
       limits:
-        cpu: null
-        memory: null
+        cpu: null     # e.g. "3000m"
+        memory: null  # e.g. "9G"
 
 # statestore parameters
   statestore:
