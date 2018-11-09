@@ -30,6 +30,10 @@ mariadb:
       limits:
         cpu: null                                # e.g. "3000m"
         memory: null                             # e.g. "9G"
+    backup:
+      volume: null                               # shared volume mount definition
+      subdirPattern: null                        # pattern for subdirectory with name backup, default backup-serverid-timestamp
+      restoreFrom: null                          # name of restore subdirectory
 
 # maxscale parameters
   maxscale:
