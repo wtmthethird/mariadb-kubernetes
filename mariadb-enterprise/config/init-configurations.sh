@@ -36,19 +36,19 @@ else
         if [[ "$MASTER_HOST" == "localhost" ]]; then
             # this is the master and it's the first run, ensure maxscale user is initialized
             expand_templates /mnt/config-template/users.sql >> /docker-entrypoint-initdb.d/init.sql
-            {{ if eq .Values.TEMPLATE "galera" }}
+            {{- if eq .Values.mariadb.cluster.topology "galera" }}
                 expand_templates /mnt/config-template/galera.cnf >> /mnt/config-map/galera.cnf
                 sed -r -i "s/<<CLUSTER_ADDRESS>>/$(hostname -i)/" /mnt/config-map/galera.cnf
-            {{ end }}
+            {{- end }}
         else
             # a first run on a slave
             # mysqldump -h $MASTER_HOST -u $REPL_USER -p$REPL_PWD --all-databases -A -Y --add-drop-database --add-drop-table --add-drop-trigger --allow-keywords --compact --master-data --lock-all-tables -F --flush-privileges --gtid -Q > /docker-entrypoint-initdb.d/slave.sql
-            {{ if or (eq .Values.TEMPLATE "standalone") (eq .Values.TEMPLATE "masterslave") }}
+            {{- if or (eq .Values.mariadb.cluster.topology "standalone") (eq .Values.mariadb.cluster.topology "masterslave") }}
                 expand_templates /mnt/config-template/replication.sql >> /docker-entrypoint-initdb.d/init.sql
-            {{ else if eq .Values.TEMPLATE "galera" }}
+            {{- else if eq .Values.mariadb.cluster.topology "galera" }}
                 expand_templates /mnt/config-template/galera.cnf >> /mnt/config-map/galera.cnf
                 sed -r -i "s/<<CLUSTER_ADDRESS>>/$MASTER_HOST/" /mnt/config-map/galera.cnf
-            {{ end }}
+            {{- end }}
         fi
     fi
 fi

@@ -8,10 +8,10 @@ set -ex
 [[ $(hostname) =~ -([0-9]+)$ ]] || exit 1
 server_id=${BASH_REMATCH[1]}
 
-{{ if or (eq .Values.TEMPLATE "standalone") (eq .Values.TEMPLATE "masterslave") }}
+{{- if or (eq .Values.mariadb.cluster.topology "standalone") (eq .Values.mariadb.cluster.topology "masterslave") }}
     # fire up the instance
     /usr/local/bin/docker-entrypoint.sh mysqld --log-bin=mariadb-bin --binlog-format=ROW --server-id=$((3000 + $server_id)) --log-slave-updates=1 --gtid-strict-mode=1 --innodb-flush-method=fsync
-{{ else if eq .Values.TEMPLATE "galera" }}
+{{- else if eq .Values.mariadb.cluster.topology "galera" }}
     MASTER_HOST=$(cat /mnt/config-map/master)
 
     cp /mnt/config-map/galera.cnf /etc/mysql/mariadb.conf.d/galera.cnf
@@ -25,4 +25,4 @@ server_id=${BASH_REMATCH[1]}
         # rm -f /var/lib/mysql/gvwstate.dat
         /usr/local/bin/docker-entrypoint.sh mysqld --log-bin=mariadb-bin --binlog-format=ROW --server-id=$((3000 + $server_id)) --log-slave-updates=1 --gtid-strict-mode=1 --innodb-flush-method=fsync
     fi
-{{ end }}
+{{- end }}

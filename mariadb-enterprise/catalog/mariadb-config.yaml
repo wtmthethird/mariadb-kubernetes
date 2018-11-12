@@ -8,7 +8,7 @@ metadata:
   name: {{ .Release.Name }}-mariadb-config
   labels:
     mariadb: {{ .Release.Name }}
-    id.mariadb: "{{ .Values.ID }}"
+    id.mariadb: "{{ .Values.mariadb.cluster.id }}"
 data:
   init-configurations.sh: |
 {{ tpl (.Files.Get "config/init-configurations.sh") . | indent 4 }}
@@ -22,10 +22,10 @@ data:
   maxscale.cnf: |
 {{ tpl (.Files.Get "config/maxscale.cnf") . | indent 4 }}
 
-{{ if or (eq .Values.TEMPLATE "standalone") (eq .Values.TEMPLATE "masterslave") }}
+{{- if or (eq .Values.mariadb.cluster.topology "standalone") (eq .Values.mariadb.cluster.topology "masterslave") }}
   replication.sql: |
 {{ tpl (.Files.Get "config/replication.sql") . | indent 4 }}
-{{ else if eq .Values.TEMPLATE "galera" }}
+{{- else if eq .Values.mariadb.cluster.topology "galera" }}
   galera.cnf: |
 {{ tpl (.Files.Get "config/galera.cnf") . | indent 4 }}
-{{ end }}
+{{- end }}

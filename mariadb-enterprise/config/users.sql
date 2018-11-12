@@ -1,7 +1,6 @@
-{{ if or (eq .Values.TEMPLATE "standalone") (eq .Values.TEMPLATE "masterslave") }}
+{{- if or (eq .Values.mariadb.cluster.topology "standalone") (eq .Values.mariadb.cluster.topology "masterslave") }}
 RESET MASTER;
-{{ end }}
-
+{{- end }}
 CREATE DATABASE test;
 
 CREATE USER '<<REPLICATION_USERNAME>>'@'127.0.0.1' IDENTIFIED BY '<<REPLICATION_PASSWORD>>';

@@ -54,4 +54,4 @@ mariadb:
 
 # statestore parameters
   statestore:
-    image: mariadb/statestore:0.0.2 
+    image: mariadb/statestore:0.0.3
