@@ -12,12 +12,20 @@ metadata:
   name: {{ .Release.Name }}-mdb-clust
   labels:
     mariadb: {{ .Release.Name }}
-    id.mariadb: "{{ .Values.ID }}"
+    {{- if .Values.mariadb.cluster.id }}
+    id.mariadb: "{{ .Values.mariadb.cluster.id }}"
+    {{- end }}
+    {{- if .Values.mariadb.cluster.labels }}
+{{ toYaml .Values.mariadb.cluster.labels | indent 4 }}
+    {{- end }}
+    {{- if .Values.mariadb.server.labels }}
+{{ toYaml .Values.mariadb.server.labels | indent 4 }}
+    {{- end }}
 spec:
   ports:
   - name: mariadb
-    port: 3306
-    targetPort: 3306
+    port: {{ .Values.mariadb.server.port }}
+    targetPort: {{ .Values.mariadb.server.port }}
   clusterIP: None
   selector:
     server.mariadb: {{ .Release.Name }}
@@ -29,27 +37,44 @@ metadata:
   name: {{ .Release.Name }}-mdb-ms
   labels:
     mariadb: {{ .Release.Name }}
-    id.mariadb: "{{ .Values.ID }}"
     server.mariadb: {{ .Release.Name }}
+    {{- if .Values.mariadb.cluster.id }}
+    id.mariadb: "{{ .Values.mariadb.cluster.id }}"
+    {{- end }}
+    {{- if .Values.mariadb.cluster.labels }}
+{{ toYaml .Values.mariadb.cluster.labels | indent 4 }}
+    {{- end }}
+    {{- if .Values.mariadb.server.labels }}
+{{ toYaml .Values.mariadb.server.labels | indent 4 }}
+    {{- end }}
 spec:
   selector:
     matchLabels:
-      mariadb: {{ .Release.Name }}
-      id.mariadb: "{{ .Values.ID }}"
       server.mariadb: {{ .Release.Name }}
   serviceName: {{ .Release.Name }}-mdb-clust
-  replicas: {{ .Values.INITIAL_COUNT_SERVER }}
+  replicas: {{ .Values.mariadb.server.replicas }}
   template:
     metadata:
+      {{- if or (.Values.mariadb.cluster.annotations) (.Values.mariadb.server.annotations) }}
+      annotations:
+      {{- end }}
+      {{- if .Values.mariadb.cluster.annotations }}
+{{ toYaml .Values.mariadb.cluster.annotations | indent 8 }}
+      {{- end }}
+      {{- if .Values.mariadb.server.annotations }}
+{{ toYaml .Values.mariadb.server.annotations | indent 8 }}
+      {{- end }}
       labels:
         mariadb: {{ .Release.Name }}
-        id.mariadb: "{{ .Values.ID }}"
         server.mariadb: {{ .Release.Name }}
+        {{- if .Values.mariadb.cluster.id }}
+        id.mariadb: {{ .Values.mariadb.cluster.id }}
+        {{- end }}
     spec:
       initContainers:
       # runs a state store client to determine the IP of the active master
       - name: init-get-master
-        image: {{ .Values.MARIADB_STATESTORE_IMAGE }}
+        image: {{ .Values.mariadb.statestore.image }}
         command: ["/bin/sh"]
         args: ["-c", "cd /root; node ./client.js mariadb-init {{ .Release.Name }}-mdb-state /mnt/config-map"]
         imagePullPolicy: IfNotPresent
@@ -60,7 +85,7 @@ spec:
             name: mariadb-configtemplate-vol
       # runs an initialization script to prepare the correct startup configuration
       - name: init-masterslave
-        image: {{ .Values.MARIADB_SERVER_IMAGE }}
+        image: {{ .Values.mariadb.server.image }}
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
@@ -83,11 +108,31 @@ spec:
         env:
         - name: MYSQL_ALLOW_EMPTY_PASSWORD
           value: "Y"
-        image: {{ .Values.MARIADB_SERVER_IMAGE }}
+        image: {{ .Values.mariadb.server.image }}
         name: mariadb-server
         ports:
         - containerPort: 3306
-        resources: {}
+        {{- if or (.Values.mariadb.maxscale.resources.limits.cpu) (.Values.mariadb.maxscale.resources.limits.memory) (.Values.mariadb.maxscale.resources.requests.cpu) (.Values.mariadb.maxscale.resources.requests.memory) }}
+        resources:
+        {{- end }}
+          {{- if or (.Values.mariadb.maxscale.resources.requests.cpu) (.Values.mariadb.maxscale.resources.requests.memory) }}
+          requests:
+          {{- end }}
+            {{- if .Values.mariadb.maxscale.resources.requests.cpu }}
+            cpu: {{ .Values.mariadb.maxscale.resources.requests.cpu }}
+            {{- end }}
+            {{- if .Values.mariadb.maxscale.resources.requests.memory }}
+            memory: {{ .Values.mariadb.maxscale.resources.requests.memory }}
+            {{- end }}
+          {{- if or (.Values.mariadb.maxscale.resources.limits.cpu) (.Values.mariadb.maxscale.resources.limits.memory) }}
+          limits:
+          {{- end }}
+            {{- if .Values.mariadb.maxscale.resources.limits.cpu }}
+            cpu: {{ .Values.mariadb.maxscale.resources.limits.cpu }}
+            {{- end }}
+            {{- if .Values.mariadb.maxscale.resources.limits.memory }}
+            memory: {{ .Values.mariadb.maxscale.resources.limits.memory }}
+            {{- end }}
         volumeMounts:
         - name: mariadb-entrypoint-vol
           mountPath: /docker-entrypoint-initdb.d
@@ -112,7 +157,7 @@ spec:
           timeoutSeconds: 1
       # runs a state store client to ensure the state is being maitained
       - name: state
-        image: {{ .Values.MARIADB_STATESTORE_IMAGE }}
+        image: {{ .Values.mariadb.statestore.image }}
         command: ["/bin/sh"]
         args: ["-c", "cd /root; node ./client.js mariadb {{ .Release.Name }}-mdb-state /mnt/config-map"]
         imagePullPolicy: IfNotPresent
@@ -137,10 +182,15 @@ spec:
       name: data
       labels:
         mariadb: {{ .Release.Name }}
-        id.mariadb: "{{ .Values.ID }}"
-        server.mariadb: {{ .Release.Name }}
+        storage.mariadb: {{ .Release.Name }}
+        {{- if .Values.mariadb.cluster.id }}
+        id.mariadb: "{{ .Values.mariadb.cluster.id }}"
+        {{- end }}
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: {{ .Values.VOLUME_SIZE }}
+          storage: {{ .Values.mariadb.server.storage.size }}
+      {{- if .Values.mariadb.server.storage.class }}
+      storageClassName: {{ .Values.mariadb.server.storage.class }}
+      {{- end }}

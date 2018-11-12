@@ -1,6 +1,6 @@
 # Copyright (C) 2018, MariaDB Corporation
 #
-# Defines a staandalone configuration in a StatefulSet behind. The number of 
+# Defines a standalone configuration in a StatefulSet behind. The number of 
 # replicas should always be 1.
 
 # External service
@@ -10,13 +10,21 @@ metadata:
   name: {{ .Release.Name }}-mariadb
   labels:
     mariadb: {{ .Release.Name }}
-    id.mariadb: "{{ .Values.ID }}"
     entrypoint.mariadb: {{ .Release.Name }}
+    {{- if .Values.mariadb.cluster.id }}
+    id.mariadb: "{{ .Values.mariadb.cluster.id }}"
+    {{- end }}
+    {{- if .Values.mariadb.cluster.labels }}
+{{ toYaml .Values.mariadb.cluster.labels | indent 4 }}
+    {{- end }}
+    {{- if .Values.mariadb.server.labels }}
+{{ toYaml .Values.mariadb.server.labels | indent 4 }}
+    {{- end }}
 spec:
   ports:
   - name: mariadb
-    port: 3306
-    targetPort: 3306
+    port: {{ .Values.mariadb.server.port }}
+    targetPort: {{ .Values.mariadb.server.port }}
   selector:
     server.mariadb: {{ .Release.Name }}
 ---   
@@ -27,27 +35,38 @@ metadata:
   name: {{ .Release.Name }}-mdb-ms
   labels:
     mariadb: {{ .Release.Name }}
-    id.mariadb: "{{ .Values.ID }}"
     server.mariadb: {{ .Release.Name }}
+    {{- if .Values.mariadb.cluster.id }}
+    id.mariadb: "{{ .Values.mariadb.cluster.id }}"
+    {{- end }}
 spec:
   selector:
     matchLabels:
-      mariadb: {{ .Release.Name }}
-      id.mariadb: "{{ .Values.ID }}"
       server.mariadb: {{ .Release.Name }}
   serviceName: {{ .Release.Name }}-mariadb
   replicas: 1
   template:
     metadata:
       labels:
-        server.mariadb: {{ .Release.Name }}
-        id.mariadb: "{{ .Values.ID }}"
         mariadb: {{ .Release.Name }}
+        server.mariadb: {{ .Release.Name }}
+        {{- if .Values.mariadb.cluster.id }}
+        id.mariadb: "{{ .Values.mariadb.cluster.id }}"
+        {{- end }}
+      {{- if or (.Values.mariadb.cluster.annotations) (.Values.mariadb.server.annotations) }}
+      annotations:
+      {{- end }}
+      {{- if .Values.mariadb.cluster.annotations }}
+{{ toYaml .Values.mariadb.cluster.annotations | indent 8 }}
+      {{- end }}
+      {{- if .Values.mariadb.server.annotations }}
+{{ toYaml .Values.mariadb.server.annotations | indent 8 }}
+      {{- end }}
     spec:
       initContainers:
       # simulate a state store client to bootstrap self as active master
       - name: init-get-master
-        image: {{ .Values.MARIADB_SERVER_IMAGE }}
+        image: {{ .Values.mariadb.server.image }}
         command: ["/bin/sh"]
         args: ["-c", "echo 'localhost' > /mnt/config-map/master"]
         imagePullPolicy: IfNotPresent
@@ -58,7 +77,7 @@ spec:
             name: mariadb-configtemplate-vol
       # runs an initialization script to prepare the correct startup configuration
       - name: init-masterslave
-        image: {{ .Values.MARIADB_SERVER_IMAGE }}
+        image: {{ .Values.mariadb.server.image }}
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
@@ -81,10 +100,10 @@ spec:
         env:
         - name: MYSQL_ALLOW_EMPTY_PASSWORD
           value: "Y"
-        image: {{ .Values.MARIADB_SERVER_IMAGE }}
+        image: {{ .Values.mariadb.server.image }}
         name: mariadb-server
         ports:
-        - containerPort: 3306
+        - containerPort: {{ .Values.mariadb.server.port }}
         resources: {}
         volumeMounts:
         - name: mariadb-entrypoint-vol
@@ -126,11 +145,15 @@ spec:
       name: data
       labels:
         mariadb: {{ .Release.Name }}
-        id.mariadb: "{{ .Values.ID }}"
-        server.mariadb: {{ .Release.Name }}
+        storage.mariadb: {{ .Release.Name }}
+        {{- if .Values.mariadb.cluster.id }}
+        id.mariadb: "{{ .Values.mariadb.cluster.id }}"
+        {{- end }}
     spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: {{ .Values.VOLUME_SIZE }}
- 
+          storage: {{ .Values.mariadb.server.storage.size }}
+      {{- if .Values.mariadb.server.storage.class }}
+      storageClassName: {{ .Values.mariadb.server.storage.class }}
+      {{- end }}
