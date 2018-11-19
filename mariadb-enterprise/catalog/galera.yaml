@@ -112,26 +112,26 @@ spec:
         name: mariadb-server
         ports:
         - containerPort: 3306
-        {{- if or (.Values.mariadb.maxscale.resources.limits.cpu) (.Values.mariadb.maxscale.resources.limits.memory) (.Values.mariadb.maxscale.resources.requests.cpu) (.Values.mariadb.maxscale.resources.requests.memory) }}
+        {{- if or (.Values.mariadb.server.resources.limits.cpu) (.Values.mariadb.server.resources.limits.memory) (.Values.mariadb.server.resources.requests.cpu) (.Values.mariadb.server.resources.requests.memory) }}
         resources:
         {{- end }}
-          {{- if or (.Values.mariadb.maxscale.resources.requests.cpu) (.Values.mariadb.maxscale.resources.requests.memory) }}
+          {{- if or (.Values.mariadb.server.resources.requests.cpu) (.Values.mariadb.server.resources.requests.memory) }}
           requests:
           {{- end }}
-            {{- if .Values.mariadb.maxscale.resources.requests.cpu }}
-            cpu: {{ .Values.mariadb.maxscale.resources.requests.cpu }}
+            {{- if .Values.mariadb.server.resources.requests.cpu }}
+            cpu: {{ .Values.mariadb.server.resources.requests.cpu }}
             {{- end }}
-            {{- if .Values.mariadb.maxscale.resources.requests.memory }}
-            memory: {{ .Values.mariadb.maxscale.resources.requests.memory }}
+            {{- if .Values.mariadb.server.resources.requests.memory }}
+            memory: {{ .Values.mariadb.server.resources.requests.memory }}
             {{- end }}
-          {{- if or (.Values.mariadb.maxscale.resources.limits.cpu) (.Values.mariadb.maxscale.resources.limits.memory) }}
+          {{- if or (.Values.mariadb.server.resources.limits.cpu) (.Values.mariadb.server.resources.limits.memory) }}
           limits:
           {{- end }}
-            {{- if .Values.mariadb.maxscale.resources.limits.cpu }}
-            cpu: {{ .Values.mariadb.maxscale.resources.limits.cpu }}
+            {{- if .Values.mariadb.server.resources.limits.cpu }}
+            cpu: {{ .Values.mariadb.server.resources.limits.cpu }}
             {{- end }}
-            {{- if .Values.mariadb.maxscale.resources.limits.memory }}
-            memory: {{ .Values.mariadb.maxscale.resources.limits.memory }}
+            {{- if .Values.mariadb.server.resources.limits.memory }}
+            memory: {{ .Values.mariadb.server.resources.limits.memory }}
             {{- end }}
         volumeMounts:
         {{- if .Values.mariadb.server.backup.claimName }}
