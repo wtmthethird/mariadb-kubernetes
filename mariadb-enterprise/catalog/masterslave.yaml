@@ -1,6 +1,6 @@
 # Copyright (C) 2018, MariaDB Corporation
 #
-# Defines a master/slave configuration in a StatefulSet behind 
+# Defines a master/slave configuration in a StatefulSet behind
 # a headless service. Allows scaling the number of server instances
 # by using:
 # kubectl scale sts <label>-mdb-ms --replicas=<number of server instances>
@@ -28,9 +28,9 @@ spec:
     targetPort: {{ .Values.mariadb.server.port }}
   clusterIP: None
   selector:
-    mariadb: {{ .Release.Name }}
----   
-# a StatefulSet for the master/slave cluster 
+    server.mariadb: {{ .Release.Name }}
+---
+# a StatefulSet for the master/slave cluster
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -104,7 +104,7 @@ spec:
       - command:
         # start a mariadb instance
         - bash
-        - /mnt/config-map/start-mariadb-instance.sh 
+        - /mnt/config-map/start-mariadb-instance.sh
         env:
         - name: MYSQL_ALLOW_EMPTY_PASSWORD
           value: "Y"
@@ -134,6 +134,10 @@ spec:
             memory: {{ .Values.mariadb.maxscale.resources.limits.memory }}
             {{- end }}
         volumeMounts:
+        {{- if .Values.mariadb.server.backup.claimName }}
+        - name: backup-data-storage
+          mountPath: /backup
+        {{- end }}
         - name: mariadb-entrypoint-vol
           mountPath: /docker-entrypoint-initdb.d
         - name: mariadb-config-vol
@@ -166,7 +170,12 @@ spec:
             name: mariadb-configtemplate-vol
       restartPolicy: Always
       volumes:
-      - name: mariadb-entrypoint-vol 
+      {{- if .Values.mariadb.server.backup.claimName }}
+      - name: backup-data-storage
+        persistentVolumeClaim:
+          claimName: {{ .Values.mariadb.server.backup.claimName }}
+      {{- end }}
+      - name: mariadb-entrypoint-vol
         emptyDir: {}
       - name: mariadb-config-vol
         emptyDir: {}
@@ -187,7 +196,7 @@ spec:
         id.mariadb: "{{ .Values.mariadb.cluster.id }}"
         {{- end }}
     spec:
-      accessModes: ["ReadWriteOnce"]
+      accessModes: ["ReadWriteMany"]
       resources:
         requests:
           storage: {{ .Values.mariadb.server.storage.size }}

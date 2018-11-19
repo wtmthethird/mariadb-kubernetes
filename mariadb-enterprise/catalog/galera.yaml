@@ -1,16 +1,17 @@
 # Copyright (C) 2018, MariaDB Corporation
 #
-# Defines a standalone configuration in a StatefulSet behind. The number of
-# replicas should always be 1.
+# Defines a galera configuration in a StatefulSet behind
+# a headless service. Allows scaling the number of server instances
+# by using:
+# kubectl scale sts <label>-mdb-galera --replicas=<number of server instances>
 
-# External service
+# Headless service for stable DNS entries for StatefulSet members
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-mariadb
+  name: {{ .Release.Name }}-mdb-clust
   labels:
     mariadb: {{ .Release.Name }}
-    entrypoint.mariadb: {{ .Release.Name }}
     {{- if .Values.mariadb.cluster.id }}
     id.mariadb: "{{ .Values.mariadb.cluster.id }}"
     {{- end }}
@@ -25,34 +26,35 @@ spec:
   - name: mariadb
     port: {{ .Values.mariadb.server.port }}
     targetPort: {{ .Values.mariadb.server.port }}
+  clusterIP: None
   selector:
     server.mariadb: {{ .Release.Name }}
 ---
-# a StatefulSet for the master/slave cluster
+# a StatefulSet for the galera cluster
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Release.Name }}-mdb-ms
+  name: {{ .Release.Name }}-mdb-galera
   labels:
     mariadb: {{ .Release.Name }}
     server.mariadb: {{ .Release.Name }}
     {{- if .Values.mariadb.cluster.id }}
     id.mariadb: "{{ .Values.mariadb.cluster.id }}"
     {{- end }}
+    {{- if .Values.mariadb.cluster.labels }}
+{{ toYaml .Values.mariadb.cluster.labels | indent 4 }}
+    {{- end }}
+    {{- if .Values.mariadb.server.labels }}
+{{ toYaml .Values.mariadb.server.labels | indent 4 }}
+    {{- end }}
 spec:
   selector:
     matchLabels:
       server.mariadb: {{ .Release.Name }}
-  serviceName: {{ .Release.Name }}-mariadb
-  replicas: 1
+  serviceName: {{ .Release.Name }}-mdb-clust
+  replicas: {{ .Values.mariadb.server.replicas }}
   template:
     metadata:
-      labels:
-        mariadb: {{ .Release.Name }}
-        server.mariadb: {{ .Release.Name }}
-        {{- if .Values.mariadb.cluster.id }}
-        id.mariadb: "{{ .Values.mariadb.cluster.id }}"
-        {{- end }}
       {{- if or (.Values.mariadb.cluster.annotations) (.Values.mariadb.server.annotations) }}
       annotations:
       {{- end }}
@@ -62,13 +64,19 @@ spec:
       {{- if .Values.mariadb.server.annotations }}
 {{ toYaml .Values.mariadb.server.annotations | indent 8 }}
       {{- end }}
+      labels:
+        mariadb: {{ .Release.Name }}
+        server.mariadb: {{ .Release.Name }}
+        {{- if .Values.mariadb.cluster.id }}
+        id.mariadb: {{ .Values.mariadb.cluster.id }}
+        {{- end }}
     spec:
       initContainers:
-      # simulate a state store client to bootstrap self as active master
-      - name: init-get-master
-        image: {{ .Values.mariadb.server.image }}
+      # runs a state store client to determine the IP of the active galera
+      - name: init-get-galera
+        image: {{ .Values.mariadb.statestore.image }}
         command: ["/bin/sh"]
-        args: ["-c", "echo 'localhost' > /mnt/config-map/master"]
+        args: ["-c", "cd /root; node ./client.js galera-init {{ .Release.Name }}-mdb-state /mnt/config-map"]
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /mnt/config-map
@@ -76,12 +84,12 @@ spec:
           - mountPath: /mnt/config-template
             name: mariadb-configtemplate-vol
       # runs an initialization script to prepare the correct startup configuration
-      - name: init-masterslave
+      - name: init-galera
         image: {{ .Values.mariadb.server.image }}
         command:
           - bash
           - /mnt/config-template/init-configurations.sh
-          - masterslave
+          - galera
         volumeMounts:
           - mountPath: /mnt/secrets
             name: mariadb-secrets-vol
@@ -103,8 +111,28 @@ spec:
         image: {{ .Values.mariadb.server.image }}
         name: mariadb-server
         ports:
-        - containerPort: {{ .Values.mariadb.server.port }}
-        resources: {}
+        - containerPort: 3306
+        {{- if or (.Values.mariadb.maxscale.resources.limits.cpu) (.Values.mariadb.maxscale.resources.limits.memory) (.Values.mariadb.maxscale.resources.requests.cpu) (.Values.mariadb.maxscale.resources.requests.memory) }}
+        resources:
+        {{- end }}
+          {{- if or (.Values.mariadb.maxscale.resources.requests.cpu) (.Values.mariadb.maxscale.resources.requests.memory) }}
+          requests:
+          {{- end }}
+            {{- if .Values.mariadb.maxscale.resources.requests.cpu }}
+            cpu: {{ .Values.mariadb.maxscale.resources.requests.cpu }}
+            {{- end }}
+            {{- if .Values.mariadb.maxscale.resources.requests.memory }}
+            memory: {{ .Values.mariadb.maxscale.resources.requests.memory }}
+            {{- end }}
+          {{- if or (.Values.mariadb.maxscale.resources.limits.cpu) (.Values.mariadb.maxscale.resources.limits.memory) }}
+          limits:
+          {{- end }}
+            {{- if .Values.mariadb.maxscale.resources.limits.cpu }}
+            cpu: {{ .Values.mariadb.maxscale.resources.limits.cpu }}
+            {{- end }}
+            {{- if .Values.mariadb.maxscale.resources.limits.memory }}
+            memory: {{ .Values.mariadb.maxscale.resources.limits.memory }}
+            {{- end }}
         volumeMounts:
         {{- if .Values.mariadb.server.backup.claimName }}
         - name: backup-data-storage
@@ -131,6 +159,15 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 2
           timeoutSeconds: 1
+      # runs a state store client to ensure the state is being maitained
+      - name: state
+        image: {{ .Values.mariadb.statestore.image }}
+        command: ["/bin/sh"]
+        args: ["-c", "cd /root; node ./client.js galera {{ .Release.Name }}-mdb-state /mnt/config-map"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /mnt/config-template
+            name: mariadb-configtemplate-vol
       restartPolicy: Always
       volumes:
       {{- if .Values.mariadb.server.backup.claimName }}
@@ -159,7 +196,7 @@ spec:
         id.mariadb: "{{ .Values.mariadb.cluster.id }}"
         {{- end }}
     spec:
-      accessModes: ["ReadWriteOnce"]
+      accessModes: ["ReadWriteMany"]
       resources:
         requests:
           storage: {{ .Values.mariadb.server.storage.size }}

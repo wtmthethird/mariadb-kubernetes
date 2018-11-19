@@ -1,10 +1,10 @@
 # Copyright (C) 2018, MariaDB Corporation
 #
 # Defines a HA maxscale cluster as a deployment fronted
-# by a load-balancer service that is also the client endpoint. 
+# by a load-balancer service that is also the client endpoint.
 # Only one MaxScale instance will be active at a time.
 # Allows scaling the number of MaxScale instances by running:
-# kubectl scale deployment <lavel>-mdb-mxs --replicas=<number of instances> 
+# kubectl scale deployment <lavel>-mdb-mxs --replicas=<number of instances>
 
 apiVersion: v1
 kind: Service
@@ -34,7 +34,7 @@ metadata:
   labels:
     mariadb: {{ .Release.Name }}
     maxscale.mariadb: {{ .Release.Name }}
-    {{- if .Values.mariadb.cluster.id }} 
+    {{- if .Values.mariadb.cluster.id }}
     id.mariadb: "{{ .Values.mariadb.cluster.id }}"
     {{- end }}
     {{- if .Values.mariadb.cluster.labels }}

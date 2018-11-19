@@ -1,12 +1,12 @@
 # Copyright (C) 2018, MariaDB Corporation
 #
-# Defines a state store server that maintains (through heartbeat calls 
+# Defines a state store server that maintains (through heartbeat calls
 # from each pod in a MariaDB cluster on a regular scheduled interval):
 #   * a list of MaxScale instances
 #   * a list of MariaDB server instances
 #   * a reference to a single active MaxScale instance
 #   * a reference to a single Master instance
-# 
+#
 # The number of replicas should be exactly 1.
 
 kind: Service

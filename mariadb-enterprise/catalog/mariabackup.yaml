@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-backup-mariadb-config
+  labels:
+    mariadb: {{ .Release.Name }}
+    {{- if .Values.mariadb.cluster.id }}
+    id.mariadb: "{{ .Values.mariadb.cluster.id }}"
+    {{- end }}
+    {{- if .Values.mariadb.cluster.labels }}
+{{ toYaml .Values.mariadb.cluster.labels | indent 4 }}
+    {{- end }}
+    {{- if .Values.mariadb.backup.labels }}
+{{ toYaml .Values.mariadb.backup.labels | indent 4 }}
+    {{- end }}
+data:
+  entrypoint.sh: |
+    #!/bin/bash
+    # for debugging
+    set -x
+
+    {{ if .Values.mariadb.backup.volume.subdirPattern }}
+    TARGET_DIR="/backup/backup-{{ .Values.mariadb.backup.volume.subdirPattern }}"
+    {{ else }}
+    TARGET_DIR="/backup/backup-{{ .Values.mariadb.backup.release.name }}-{{ date "20060102150405" .Release.Time }}"
+    {{ end }}
+
+    mkdir $TARGET_DIR
+    echo "Backup will be in \"$TARGET_DIR\""
+
+    {{ if eq .Values.mariadb.backup.release.type "standalone" }}
+    MASTER_HOST="{{ .Values.mariadb.backup.release.name }}-mariadb"
+    mariabackup --backup --target-dir=$TARGET_DIR --user=$ADMIN_USERNAME --password=$ADMIN_PASSWORD --host="$MASTER_HOST"
+    {{ else if eq .Values.mariadb.backup.release.type "masterslave" }}
+    MASTER_HOST="{{ .Values.mariadb.backup.release.name }}-mdb-ms-{{ .Values.mariadb.backup.release.id }}.{{ .Values.mariadb.backup.release.name }}-mdb-clust"
+    mariabackup --backup --target-dir=$TARGET_DIR --user=$ADMIN_USERNAME --password=$ADMIN_PASSWORD --host="$MASTER_HOST"
+    {{ else if eq .Values.mariadb.backup.release.type "galera" }}
+    MASTER_HOST="{{ .Values.mariadb.backup.release.name }}-mdb-galera-{{ .Values.mariadb.backup.release.id }}.{{ .Values.mariadb.backup.release.name }}-mdb-clust"
+    mariabackup --backup --galera-info --target-dir=$TARGET_DIR --user=$ADMIN_USERNAME --password=$ADMIN_PASSWORD --host="$MASTER_HOST"
+    {{ end }}
+
+    # prepare data for restoring
+    mariabackup --prepare --target-dir=$TARGET_DIR --user=$ADMIN_USERNAME --password=$ADMIN_PASSWORD
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-backup-mariadb
+  labels:
+  labels:
+    mariadb: {{ .Release.Name }}
+    backup.mariadb: {{ .Release.Name }}
+    {{- if .Values.mariadb.cluster.id }}
+    id.mariadb: "{{ .Values.mariadb.cluster.id }}"
+    {{- end }}
+    {{- if .Values.mariadb.cluster.labels }}
+{{ toYaml .Values.mariadb.cluster.labels | indent 4 }}
+    {{- end }}
+    {{- if .Values.mariadb.backup.labels }}
+{{ toYaml .Values.mariadb.backup.labels | indent 4 }}
+    {{- end }}
+spec:
+  template:
+    metadata:
+      {{- if or (.Values.mariadb.cluster.annotations) (.Values.mariadb.backup.annotations) }}
+      annotations:
+      {{- end }}
+      {{- if .Values.mariadb.cluster.annotations }}
+{{ toYaml .Values.mariadb.cluster.annotations | indent 8 }}
+      {{- end }}
+      {{- if .Values.mariadb.backup.annotations }}
+{{ toYaml .Values.mariadb.backup.annotations | indent 8 }}
+      {{- end }}
+      labels:
+        mariadb: {{ .Release.Name }}
+        backup.mariadb: {{ .Release.Name }}
+        {{- if .Values.mariadb.cluster.id }}
+        id.mariadb: {{ .Values.mariadb.cluster.id }}
+        {{- end }}
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: backup
+        image: {{ .Values.mariadb.backup.image }}
+        command: ["/bin/bash"]
+        args: ["-c", "cp /entrypoint/entrypoint.sh entrypoint.sh; chmod +x entrypoint.sh; ./entrypoint.sh"]
+        env:
+        - name: ADMIN_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.mariadb.backup.release.name }}-mariadb-secret
+              key: admin-username
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.mariadb.backup.release.name }}-mariadb-secret
+              key: admin-password
+        - name: MARIADB_ALLOW_EMPTY_PASSWORD
+          value: "true"
+        volumeMounts:
+        - mountPath: /backup
+          name: backup-data-storage
+        - mountPath: /entrypoint/entrypoint.sh
+          name: mariadb-configtemplate-vol
+          subPath: entrypoint.sh
+        - name: backup-data-original
+          mountPath: /var/lib/mysql
+          subPath: mysql
+      volumes:
+      - name: backup-data-storage
+        persistentVolumeClaim:
+          claimName: {{ .Values.mariadb.backup.volume.claimName }}
+      - name: backup-data-original
+        persistentVolumeClaim:
+          {{ if or (eq .Values.mariadb.backup.release.type "masterslave") (eq .Values.mariadb.backup.release.type "standalone") }}
+          claimName: data-{{ .Values.mariadb.backup.release.name }}-mdb-ms-{{ .Values.mariadb.backup.release.id }}
+          {{ else if eq .Values.mariadb.backup.release.type "galera" }}
+          claimName: data-{{ .Values.mariadb.backup.release.name }}-mdb-galera-{{ .Values.mariadb.backup.release.id }}
+          {{ end }}
+      - name: mariadb-configtemplate-vol
+        configMap:
+          name: {{ .Release.Name }}-backup-mariadb-config
+  backoffLimit: 4
