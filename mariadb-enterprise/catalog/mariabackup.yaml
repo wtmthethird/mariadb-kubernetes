@@ -75,7 +75,7 @@ spec:
         mariadb: {{ .Release.Name }}
         backup.mariadb: {{ .Release.Name }}
         {{- if .Values.mariadb.cluster.id }}
-        id.mariadb: {{ .Values.mariadb.cluster.id }}
+        id.mariadb: "{{ .Values.mariadb.cluster.id }}"
         {{- end }}
     spec:
       restartPolicy: Never
