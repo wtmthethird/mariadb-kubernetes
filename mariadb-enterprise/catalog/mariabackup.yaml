@@ -19,25 +19,25 @@ data:
     # for debugging
     set -x
 
-    {{ if .Values.mariadb.backup.volume.subdirPattern }}
-    TARGET_DIR="/backup/backup-{{ .Values.mariadb.backup.volume.subdirPattern }}"
-    {{ else }}
-    TARGET_DIR="/backup/backup-{{ .Values.mariadb.backup.release.name }}-{{ date "20060102150405" .Release.Time }}"
-    {{ end }}
+    if [ ! "$SUBDIR_PATTERN" == "" ]; then
+      TARGET_DIR="/backup/backup-$SUBDIR_PATTERN"
+    else
+      TARGET_DIR="/backup/backup-$RELEASE_NAME-$(date +%Y-%m-%d-%H-%M-%S)"
+    fi
 
     mkdir $TARGET_DIR
     echo "Backup will be in \"$TARGET_DIR\""
 
-    {{ if eq .Values.mariadb.backup.release.type "standalone" }}
-    MASTER_HOST="{{ .Values.mariadb.backup.release.name }}-mariadb"
-    mariabackup --backup --target-dir=$TARGET_DIR --user=$ADMIN_USERNAME --password=$ADMIN_PASSWORD --host="$MASTER_HOST"
-    {{ else if eq .Values.mariadb.backup.release.type "masterslave" }}
-    MASTER_HOST="{{ .Values.mariadb.backup.release.name }}-mdb-ms-{{ .Values.mariadb.backup.release.id }}.{{ .Values.mariadb.backup.release.name }}-mdb-clust"
-    mariabackup --backup --target-dir=$TARGET_DIR --user=$ADMIN_USERNAME --password=$ADMIN_PASSWORD --host="$MASTER_HOST"
-    {{ else if eq .Values.mariadb.backup.release.type "galera" }}
-    MASTER_HOST="{{ .Values.mariadb.backup.release.name }}-mdb-galera-{{ .Values.mariadb.backup.release.id }}.{{ .Values.mariadb.backup.release.name }}-mdb-clust"
-    mariabackup --backup --galera-info --target-dir=$TARGET_DIR --user=$ADMIN_USERNAME --password=$ADMIN_PASSWORD --host="$MASTER_HOST"
-    {{ end }}
+    if [ "$RELEASE_TYPE" == "standalone" ]; then
+      MASTER_HOST="$RELEASE_NAME-mariadb"
+      mariabackup --backup --target-dir=$TARGET_DIR --user=$ADMIN_USERNAME --password=$ADMIN_PASSWORD --host="$MASTER_HOST"
+    elif [ "$RELEASE_TYPE" == "masterslave" ]; then
+      MASTER_HOST="$RELEASE_NAME-mdb-ms-$RELEASE_ID.$RELEASE_NAME-mdb-clust"
+      mariabackup --backup --target-dir=$TARGET_DIR --user=$ADMIN_USERNAME --password=$ADMIN_PASSWORD --host="$MASTER_HOST"
+    elif [ "$RELEASE_TYPE" == "galera" ]; then
+      MASTER_HOST="$RELEASE_NAME-mdb-galera-$RELEASE_ID.$RELEASE_NAME-mdb-clust"
+      mariabackup --backup --galera-info --target-dir=$TARGET_DIR --user=$ADMIN_USERNAME --password=$ADMIN_PASSWORD --host="$MASTER_HOST"
+    fi
 
     # prepare data for restoring
     mariabackup --prepare --target-dir=$TARGET_DIR --user=$ADMIN_USERNAME --password=$ADMIN_PASSWORD
@@ -97,6 +97,14 @@ spec:
               key: admin-password
         - name: MARIADB_ALLOW_EMPTY_PASSWORD
           value: "true"
+        - name: SUBDIR_PATTERN
+          value: {{ .Values.mariadb.backup.volume.subdirPattern }}
+        - name: RELEASE_NAME
+          value: {{ .Values.mariadb.backup.release.name }}
+        - name: RELEASE_ID
+          value: "{{ .Values.mariadb.backup.release.id }}"
+        - name: RELEASE_TYPE
+          value: {{ .Values.mariadb.backup.release.type }}
         volumeMounts:
         - mountPath: /backup
           name: backup-data-storage

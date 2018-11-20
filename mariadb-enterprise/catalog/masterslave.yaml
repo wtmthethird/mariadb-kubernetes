@@ -90,6 +90,11 @@ spec:
           - bash
           - /mnt/config-template/init-configurations.sh
           - masterslave
+        env:
+        - name: BACKUP_CLAIM_NAME
+          value: {{ .Values.mariadb.server.backup.claimName }}
+        - name: CLUSTER_TOPOLOGY
+          value: {{ .Values.mariadb.cluster.topology }}
         volumeMounts:
           - mountPath: /mnt/secrets
             name: mariadb-secrets-vol
@@ -108,6 +113,12 @@ spec:
         env:
         - name: MYSQL_ALLOW_EMPTY_PASSWORD
           value: "Y"
+        - name: RESTORE_FROM_FOLDER
+          value: {{ .Values.mariadb.server.backup.restoreFrom }}
+        - name: BACKUP_CLAIM_NAME
+          value: {{ .Values.mariadb.server.backup.claimName }}
+        - name: CLUSTER_TOPOLOGY
+          value: {{ .Values.mariadb.cluster.topology }}
         image: {{ .Values.mariadb.server.image }}
         name: mariadb-server
         ports:

@@ -9,17 +9,17 @@ set -ex
 server_id=${BASH_REMATCH[1]}
 
 # load backup
-{{- if .Values.mariadb.server.backup.claimName }}
-MASTER_HOST=$(cat /mnt/config-map/master)
-if [[ "$MASTER_HOST" == "localhost" ]]; then
-    chown -R mysql:mysql /backup/{{ .Values.mariadb.server.backup.restoreFrom }}
+if [[ ! "$BACKUP_CLAIM_NAME" == "" ]]; then
+    MASTER_HOST=$(cat /mnt/config-map/master)
+    if [[ "$MASTER_HOST" == "localhost" ]]; then
+        chown -R mysql:mysql /backup/$RESTORE_FROM_FOLDER
+    fi
 fi
-{{- end }}
 
-{{- if or (eq .Values.mariadb.cluster.topology "standalone") (eq .Values.mariadb.cluster.topology "masterslave") }}
+if [[ "$CLUSTER_TOPOLOGY" == "standalone" ]] || [[ "$CLUSTER_TOPOLOGY" == "masterslave" ]]; then
     # fire up the instance
     /usr/local/bin/docker-entrypoint.sh mysqld --log-bin=mariadb-bin --binlog-format=ROW --server-id=$((3000 + $server_id)) --log-slave-updates=1 --gtid-strict-mode=1 --innodb-flush-method=fsync
-{{- else if eq .Values.mariadb.cluster.topology "galera" }}
+elif [[ "$CLUSTER_TOPOLOGY" == "galera" ]]; then
     MASTER_HOST=$(cat /mnt/config-map/master)
 
     cp /mnt/config-map/galera.cnf /etc/mysql/mariadb.conf.d/galera.cnf
@@ -30,4 +30,4 @@ fi
     else
         /usr/local/bin/docker-entrypoint.sh mysqld --log-bin=mariadb-bin --binlog-format=ROW --server-id=$((3000 + $server_id)) --log-slave-updates=1 --gtid-strict-mode=1 --innodb-flush-method=fsync
     fi
-{{- end }}
+fi
