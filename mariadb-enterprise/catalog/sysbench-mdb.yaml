@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Pod
-metadata:
-  name: mdb-sysbench
-spec:
-  containers:
-  - name: mdb-sysbench
-    image: nedpk/mob-sysbench
-    
