@@ -14,4 +14,6 @@
 {{ tpl (.Files.Get "catalog/maxscale.yaml") . }}
 ---
 {{ tpl (.Files.Get "catalog/state-store.yaml") . }}
+---
+{{ tpl (.Files.Get "catalog/sysbench-mdb.yaml") . }}
 {{ end }}

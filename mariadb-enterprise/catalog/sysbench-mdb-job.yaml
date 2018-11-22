@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # name: {{ .Release.Name }}-performance-test-mariadb
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: performance-test
+        image: nedpk/mob-sysbench
+        command: ["/bin/bash"]
+        args: ["-c", "/root/mariadb-benchmarks/sysbench-runs/skeleton/runme.sh"]
+        env:
+        - name: ADMIN_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.mariadb.performancetest.cluster.name }}-mariadb-secret
+              key: admin-username
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.mariadb.performancetest.cluster.name }}-mariadb-secret
+              key: admin-password
+        - name: MARIADB_CLUSTER_NAME
+          value: {{ .Values.mariadb.performancetest.cluster.name }}
+        -name: LUA_SCRIPT
+          value: {{ .Values.mariadb.performancetest.luatest.name }}
+        volumeMounts:
+        - mountPath: /root/mariadb-benchmarks/sysbench-runs/skeleton/res01
+          name: result
+        - mountPath: /root/mariadb-benchmarks/sysbench-runs/skeleton/lua
+          name: lualocaion
+      volumes:
+      - name: result
+        persistentVolumeClaim:
+          claimName: {{ .Values.mariadb.performancetestresult.volume.claimName }}
+      - name: result
+        persistentVolumeClaim:
+          claimName: {{ .Values.mariadb.performancetestlualocation.volume.claimName }}
+  backoffLimit: 4
