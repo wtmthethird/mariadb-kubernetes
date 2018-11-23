@@ -1,0 +1,3 @@
+{{ if eq .Values.mariadb.cluster.topology "perf" }}
+{{ tpl (.Files.Get "catalog/perf-test.yaml") . }}
+{{ end }}
