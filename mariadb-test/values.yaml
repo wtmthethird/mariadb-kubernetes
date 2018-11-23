@@ -1,0 +1,21 @@
+mariadb:
+  # general cluster parameters
+  cluster:
+    id: null                                     # e.g. "1"
+    topology: perf                               # possible values "perf" (more coming soon)
+    labels: null                                 # custom labels to be added to the mariadb service, e.g. for discovery   
+    annotations: null                            # custom annotations to be added to each pod in the cluster
+
+  test:
+    perf:
+      replicas: 2
+      labels: null                                 # custom labels applied to maxscale pods only
+      annotations: null                            # custom annotations applied to maxscale pods only
+      image: nedpk/mob-sysbench
+      resources:
+        requests:
+          cpu: null                                # e.g. "1000m"
+          memory: null                             # e.g. "3G"
+        limits:
+          cpu: null                                # e.g. "3000m"
+          memory: null                             # e.g. "9G"
