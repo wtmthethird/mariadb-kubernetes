@@ -71,6 +71,14 @@ mariadb:
       claimName: null                          # shared volume mount definition
       subdirPattern: null                      # pattern for subdirectory with name backup, default backup-serverid-timestamp
 
+
+  
+# zeppelin sandbox  
+  zeppelin:
+    image: mariadb/columnstore_zeppelin:latest
+    zeppUser: zepp_user
+    zeppPass: zepp_password
+
 # columnstore cluster parameters
   columnstore:
     image: nastybuff/cs:1.2

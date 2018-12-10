@@ -14,7 +14,6 @@ metadata:
   name: {{ .Release.Name }}-mdb-clust
   labels:
     mariadb: {{ .Release.Name }}
-    entrypoint.mariadb: {{ .Release.Name }}
     {{- if .Values.mariadb.cluster.id }}
     id.mariadb: "{{ .Values.mariadb.cluster.id }}"
     {{- end }}
@@ -29,6 +28,7 @@ spec:
   - name: mariadb
     port: {{ .Values.mariadb.server.port }}
     targetPort: {{ .Values.mariadb.server.port }}
+  clusterIP: None
   selector:
     columnstore.um.mariadb: {{ .Release.Name }}
 ---
@@ -38,6 +38,7 @@ kind: StatefulSet
 metadata:
   name: {{ .Release.Name }}-mdb-cs-pm-module
   labels:
+    mariadb: {{ .Release.Name }}
     mariadb: {{ .Release.Name }}
     {{- if .Values.mariadb.cluster.id }}
     id.mariadb: "{{ .Values.mariadb.cluster.id }}"

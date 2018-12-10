@@ -13,6 +13,8 @@ data:
   init-configurations.sh: |
 {{- if or (eq .Values.mariadb.cluster.topology "columnstore") }}
 {{ tpl (.Files.Get "config/init-configuration-columnstore-mn.sh") . | indent 4 }}
+{{- else if eq .Values.mariadb.cluster.topology "zeppelin" }}
+{{ tpl (.Files.Get "config/init-zeppelin.sh") . | indent 4 }}
 {{- else }}
 {{ tpl (.Files.Get "config/init-configurations.sh") . | indent 4 }}
 {{- end }}
@@ -43,6 +45,8 @@ data:
 {{- if .Values.mariadb.columnstore.sandbox}}
   02_load_bookstore_data.sh: |
 {{ tpl (.Files.Get "config/columnstore/multi_node_um1/02_load_bookstore_data.sh") . | indent 4 }}
+  03_create_zeppelin_user.sql: |
+{{ tpl (.Files.Get "config/columnstore/multi_node_um1/03_create_zeppelin_user.sql") . | indent 4 }}
 {{- end }}
 {{- end }}
   start-mariadb-instance.sh: |
@@ -71,3 +75,4 @@ data:
   backup-restore.sh: |
 {{ tpl (.Files.Get "config/backup-restore.sh") . | indent 4 }}
 {{- end }}
+

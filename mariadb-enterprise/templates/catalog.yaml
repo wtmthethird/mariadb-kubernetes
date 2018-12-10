@@ -34,4 +34,10 @@
 {{ tpl (.Files.Get "catalog/state-store.yaml") . }}
 {{ else if eq .Values.mariadb.cluster.topology "backup" }}
 {{ tpl (.Files.Get "catalog/mariabackup.yaml") . }}
+{{ else if eq .Values.mariadb.cluster.topology "zeppelin"}}
+{{ tpl (.Files.Get "catalog/mariadb-config.yaml") . }}
+---
+{{ tpl (.Files.Get "catalog/mariadb-secret.yaml") . }}
+---
+{{ tpl (.Files.Get "catalog/zeppelin.yaml") . }}
 {{ end }}
