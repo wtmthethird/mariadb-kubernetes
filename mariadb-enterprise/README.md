@@ -135,6 +135,14 @@ To remove a helm release:
 helm delete <id>
 ```
 
+The cluster topology can be specified by overriding the `mariadb.cluster.topology` value in the `values.yaml` file or directly when running the `helm` command:
+
+```sh
+helm install . --name <id> --set mariadb.cluster.topology=standalone
+```
+
+Any value in the `values.yaml` file can be overridden this way.
+
 ## Using the cluster
 
 To access the MaxScale node locally, find the ip address of the service:
@@ -181,9 +189,13 @@ To use the provided backup job set ```mariadb.cluster.topology``` to ```backup``
     - ```mariadb.backup.release.type``` is the type of cluster we are backing up (```masterslave```, ```galera``` or ```standalone```)
     - ```mariadb.backup.volume.claimName``` is the name of the volume claim that points to the backup volume.
     - ```mariadb.backup.volume.subdirPattern``` is an optional custom name for the backup directory (by default it's ```backup-{{cluster_id}}-{{current_date}}```)
-2. Inside the ```mariabackup``` directory, run
+2. Inside the ```mariadb-enterprise``` directory, run
     ```sh
     helm install .
+    ```
+3. Alternatively, all of this can be done with a single command:
+    ```sh
+    helm install . --name <id> --set mariadb.cluster.topology=backup --set mariadb.backup.release.name=<id_to_backup> --set mariadb.backup.release.id=<pod_id> --set mariadb.backup.release.type=<topology_to_backup> --set mariadb.backup.volume.claimName=<PVC>
     ```
 
 ### Restore
@@ -194,3 +206,8 @@ You can use an existing backup and load it when starting a new cluster.
     - ```mariadb.server.backup.claimName``` is the name of the volume claim that points to the backup volume
     - ```mariadb.server.backup.restoreFrom``` should point to the exact directory containing the backup.
 2. Start the cluster as you would normally.
+
+3. The above as a single command:
+    ```sh
+    helm install . --name <id> --set mariadb.cluster.topology=<topology_to_restore> --set mariadb.server.backup.claimName=<PVC> --set mariadb.server.backup.restoreFrom=<path>
+    ```
