@@ -208,7 +208,7 @@ metadata:
   name: {{ .Release.Name }}-mdb-cs-um-module
   labels:
     mariadb: {{ .Release.Name }}
-    columnstore.um.mariadb: {{ .Release.Name }}
+    columnstore.mariadb: {{ .Release.Name }}
     {{- if .Values.mariadb.cluster.id }}
     id.mariadb: "{{ .Values.mariadb.cluster.id }}"
     {{- end }}
@@ -221,8 +221,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      mariadb: {{ .Release.Name }}
-      columnstore.um.mariadb: {{ .Release.Name }}
+      columnstore.mariadb: {{ .Release.Name }}
   serviceName: {{ .Release.Name }}-mdb-clust
   replicas: {{ .Values.mariadb.columnstore.um.replicas }}
   template:
@@ -235,7 +234,7 @@ spec:
       {{- end }}
       labels:
         mariadb: {{ .Release.Name }}
-        columnstore.um.mariadb: {{ .Release.Name }}
+        columnstore.mariadb: {{ .Release.Name }}
         {{- if .Values.mariadb.cluster.id }}
         id.mariadb: {{ .Values.mariadb.cluster.id }}
         {{- end }}

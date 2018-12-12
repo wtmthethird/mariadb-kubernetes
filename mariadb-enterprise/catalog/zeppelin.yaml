@@ -10,7 +10,7 @@ spec:
     port: 8080
     targetPort: 8080
   selector:
-    mariadb: {{ .Release.Name }}
+    mariadb-zeppelin: {{ .Release.Name }}
 
 ---
 apiVersion: apps/v1
@@ -31,6 +31,7 @@ spec:
     metadata:
       labels:
         mariadb: {{ .Release.Name }}
+        mariadb-zeppelin: {{ .Release.Name }}
     spec:
       initContainers:
       - name: init-mdb-zeppelin
@@ -65,26 +66,26 @@ spec:
         - name: notebook
           mountPath: /zeppelin/notebook
         restartPolicy: Always
-        {{- if or (.Values.mariadb.server.resources.limits.cpu) (.Values.mariadb.server.resources.limits.memory) (.Values.mariadb.server.resources.requests.cpu) (.Values.mariadb.server.resources.requests.memory) }}        
+        {{- if or (.Values.mariadb.zeppelin.resources.limits.cpu) (.Values.mariadb.zeppelin.resources.limits.memory) (.Values.mariadb.zeppelin.resources.requests.cpu) (.Values.mariadb.zeppelin.resources.requests.memory) }}        
         resources:
         {{- end }}
-          {{- if or (.Values.mariadb.server.resources.requests.cpu) (.Values.mariadb.server.resources.requests.memory) }}
+          {{- if or (.Values.mariadb.zeppelin.resources.requests.cpu) (.Values.mariadb.zeppelin.resources.requests.memory) }}
           requests:
           {{- end }}
-            {{- if .Values.mariadb.server.resources.requests.cpu }}
-            cpu: {{ .Values.mariadb.server.resources.requests.cpu }}
+            {{- if .Values.mariadb.zeppelin.resources.requests.cpu }}
+            cpu: {{ .Values.mariadb.zeppelin.resources.requests.cpu }}
             {{- end }}
-            {{- if .Values.mariadb.server.resources.requests.memory }}
-            memory: {{ .Values.mariadb.server.resources.requests.memory }}
+            {{- if .Values.mariadb.zeppelin.resources.requests.memory }}
+            memory: {{ .Values.mariadb.zeppelin.resources.requests.memory }}
             {{- end }}
-          {{- if or (.Values.mariadb.server.resources.limits.cpu) (.Values.mariadb.server.resources.limits.memory) }}
+          {{- if or (.Values.mariadb.zeppelin.resources.limits.cpu) (.Values.mariadb.zeppelin.resources.limits.memory) }}
           limits:
           {{- end }}
-            {{- if .Values.mariadb.server.resources.limits.cpu }}
-            cpu: {{ .Values.mariadb.server.resources.limits.cpu }}
+            {{- if .Values.mariadb.zeppelin.resources.limits.cpu }}
+            cpu: {{ .Values.mariadb.zeppelin.resources.limits.cpu }}
             {{- end }}
-            {{- if .Values.mariadb.server.resources.limits.memory }}
-            memory: {{ .Values.mariadb.server.resources.limits.memory }}
+            {{- if .Values.mariadb.zeppelin.resources.limits.memory }}
+            memory: {{ .Values.mariadb.zeppelin.resources.limits.memory }}
             {{- end }}        
       volumes:
         - name: mariadb-entrypoint-vol
