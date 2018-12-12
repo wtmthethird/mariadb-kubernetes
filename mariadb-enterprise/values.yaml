@@ -70,7 +70,19 @@ mariadb:
     volume:
       claimName: null                          # shared volume mount definition
       subdirPattern: null                      # pattern for subdirectory with name backup, default backup-serverid-timestamp
-
+# zeppelin sandbox  
+  zeppelin:
+    image: mariadb/columnstore_zeppelin:latest
+    zeppUser: zepp_user
+    zeppPass: zepp_password
+      # We want to handle configurations of UM and PM separately
+    resources:
+      requests:
+        cpu: null                                # e.g. "1000m"
+        memory: 2G                             # e.g. "3G"
+      limits:
+        cpu: null                                # e.g. "3000m"
+        memory: null
 # columnstore cluster parameters
   columnstore:
     image: nastybuff/cs:1.2
