@@ -7,7 +7,6 @@
 # by using:
 # kubectl scale sts <label>-mdb-clust --replicas=<number of server instances>
 
-# Headless service for stable DNS entries for StatefulSet members
 apiVersion: v1
 kind: Service
 metadata:
@@ -28,7 +27,6 @@ spec:
   - name: mariadb
     port: {{ .Values.mariadb.server.port }}
     targetPort: {{ .Values.mariadb.server.port }}
-  clusterIP: None
   selector:
     columnstore.um.mariadb: {{ .Release.Name }}
 ---
