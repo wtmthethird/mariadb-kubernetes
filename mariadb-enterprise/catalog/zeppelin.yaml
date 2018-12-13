@@ -58,6 +58,9 @@ spec:
         ports:
         - containerPort: 8080
         resources: {}
+        env:
+        - name: MARIADB_DATABASE_SERVICE
+          value: {{.Values.mariadb.zeppelin.database}}
         volumeMounts:
         - name: mariadb-entrypoint-vol
           mountPath: /docker-entrypoint-initdb.d

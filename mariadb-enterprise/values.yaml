@@ -73,6 +73,7 @@ mariadb:
 # zeppelin sandbox  
   zeppelin:
     image: mariadb/columnstore_zeppelin:latest
+    database: sandbox-db-mdb-clust
     zeppUser: zepp_user
     zeppPass: zepp_password
       # We want to handle configurations of UM and PM separately
