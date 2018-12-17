@@ -37,7 +37,7 @@ spec:
       containers:
       - name: mdb-sysbench
         image: {{ .Values.mariadb.test.perf.image }}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         {{- if or (.Values.mariadb.test.perf.resources.limits.cpu) (.Values.mariadb.test.perf.resources.limits.memory) (.Values.mariadb.test.perf.resources.requests.cpu) (.Values.mariadb.test.perf.resources.requests.memory) }}
         resources:
         {{- end }}
