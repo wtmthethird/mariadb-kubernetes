@@ -9,11 +9,10 @@ set -ex
 server_id=${BASH_REMATCH[1]}
 
 # load backup
-if [[ ! "$BACKUP_CLAIM_NAME" == "" ]]; then
-    MASTER_HOST=$(cat /mnt/config-map/master)
-    if [[ "$MASTER_HOST" == "localhost" ]]; then
-        chown -R mysql:mysql /backup/$RESTORE_FROM_FOLDER
-    fi
+if [[ ! "$RESTORE_FROM_FOLDER" == "" ]]; then
+    mkdir /backup_local
+    cp -a /backup-storage/$RESTORE_FROM_FOLDER/* /backup_local
+    chown -R mysql:mysql /backup_local
 fi
 
 if [[ "$CLUSTER_TOPOLOGY" == "standalone" ]] || [[ "$CLUSTER_TOPOLOGY" == "masterslave" ]]; then

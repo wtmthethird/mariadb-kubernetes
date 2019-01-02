@@ -115,6 +115,46 @@ minikube stop
 
 ## Running the Master Slave plus MaxScale Cluster
 
+### Installation Prerequisites
+
+It is highly advisable to have an NFS server set up in order to use the backup and restore functionality provided. Here is a simple NFS server example running in Kubernetes that can be used for testing. For production, an NFS server that doesn't live in Kubernetes might be a better approach.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nfs-test
+  labels:
+    app: nfs-test
+spec:
+  containers:
+  - name: nfs
+    image: itsthenetwork/nfs-server-alpine
+    env:
+    - name: SHARED_DIRECTORY
+      value: /nfs
+    volumeMounts:
+    - name: data
+      mountPath: /nfs
+    securityContext:
+      privileged: true
+  volumes:
+  - name: data
+    emptyDir: {}
+```
+
+To use the above code, save it in an `.yaml` file (for example `nfs-test.yaml`). Then run the following command:
+
+```sh
+  kubectl create -f nfs-test.yaml
+```
+
+You can then find the NFS server's IP by running
+
+```sh
+  kubectl describe pod nfs-test
+```
+
 ### Installing the Cluster with Helm
 
 Helm provides a simple means of installation and is the *recommended* approach. To install the cluster simply run specifying a unique id which is used as the release name as well as name prefix for other objects:
@@ -135,13 +175,19 @@ To remove a helm release:
 helm delete <id>
 ```
 
-The cluster topology can be specified by overriding the `mariadb.cluster.topology` value in the `values.yaml` file or directly when running the `helm` command:
+The cluster topology can be specified by changing the `mariadb.cluster.topology` value in the `values.yaml` file or directly overriding it when running the `helm` command:
 
 ```sh
-helm install . --name <id> --set mariadb.cluster.topology=standalone
+helm install . --name <id> --set mariadb.cluster.topology=masterslave
 ```
 
-Any value in the `values.yaml` file can be overridden this way.
+Possible values are `masterslave`, `standalone` and `galera`. Default is `masterslave`.  
+Any value in the `values.yaml` file can be overridden this way.  
+If you also want to connect to an NFS server in order to be able to make backups in the future, run:
+
+```sh
+helm install . --name <id> --set mariadb.cluster.topology=masterslave --set mariadb.server.backup.nfs.server=<NFS_SERVER_IP>
+```
 
 ## Using the cluster
 
@@ -177,37 +223,44 @@ Applications deployed in the same namespace in Kubernetes can also access the cl
 
 ## Using the Backup/Restore functionality
 
-You can backup a running cluster or initialize a new cluster with an existing backup
+You can backup an already running cluster or initialize a new cluster with an existing backup
 
 ### Backup
 
-To use the provided backup job set ```mariadb.cluster.topology``` to ```backup```
+#### Backup Prerequisites
 
-1. Change these values in the ```values.yaml``` file:
-    - ```mariadb.backup.release.name``` should be the ```<id>``` of the cluster to backup (By default something like ```yellow-puffin```)
-    - ```mariadb.backup.release.id``` should be the id of the node in the cluster to backup (Integer usually ```0```)
-    - ```mariadb.backup.release.type``` is the type of cluster we are backing up (```masterslave```, ```galera``` or ```standalone```)
-    - ```mariadb.backup.volume.claimName``` is the name of the volume claim that points to the backup volume.
-    - ```mariadb.backup.volume.subdirPattern``` is an optional custom name for the backup directory (by default it's ```backup-{{cluster_id}}-{{current_date}}```)
-2. Inside the ```mariadb-enterprise``` directory, run
-    ```sh
-    helm install .
-    ```
-3. Alternatively, all of this can be done with a single command:
-    ```sh
-    helm install . --name <id> --set mariadb.cluster.topology=backup --set mariadb.backup.release.name=<id_to_backup> --set mariadb.backup.release.id=<pod_id> --set mariadb.backup.release.type=<topology_to_backup> --set mariadb.backup.volume.claimName=<PVC>
-    ```
+You need a running MariaDB cluster connected to an NFS server.  
+The `Installation Prerequisites` and `Installing the Cluster with Helm` sections contain more information about this.
+
+#### Backup procedure
+
+run in terminal
+
+```sh
+kubectl exec -it <name_of_the_pod_to_backup> -- bash /mnt/config-map/backup-save.sh
+```
+
+Near the start of the log you can find the name of the folder where your backup will be stored on the NFS server. The format is `backup-<pod-name>-<backup_date>`.
 
 ### Restore
 
-You can use an existing backup and load it when starting a new cluster.
+You can use an existing backup and load it when starting a new cluster. Restoring always creates a new cluster. Restoring into a running cluster is not possible.
+
+#### Restore Prerequisites
+
+- an existing backup located in an NFS volume
+
+#### Restore procedure
 
 1. Change these values in the values.yaml file:
-    - ```mariadb.server.backup.claimName``` is the name of the volume claim that points to the backup volume
-    - ```mariadb.server.backup.restoreFrom``` should point to the exact directory containing the backup.
-2. Start the cluster as you would normally.
-
+    - `mariadb.server.backup.restoreFrom` should point to the exact directory containing the backup.
+    - `mariadb.server.backup.nfs.server` should be the IP of hostname of the NFS server
+    - `mariadb.server.backup.nfs.path` should be the NFS mount point (optional, default is `"/"`)
+2. Start the cluster as you would normally using
+    ```sh
+    helm install .
+    ```
 3. The above as a single command:
     ```sh
-    helm install . --name <id> --set mariadb.cluster.topology=<topology_to_restore> --set mariadb.server.backup.claimName=<PVC> --set mariadb.server.backup.restoreFrom=<path>
+    helm install . --name <id> --set mariadb.server.backup.restoreFrom=<backup_path> --set mariadb.server.backup.nfs.server=<nfs_server_ip> --set mariadb.server.backup.nfs.path=<nfs_mount_point>
     ```

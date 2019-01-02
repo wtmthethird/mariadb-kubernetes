@@ -32,10 +32,11 @@ if [ "$1" == "maxscale" ]; then
     expand_templates /mnt/config-template/maxscale.cnf >> /etc/maxscale-cfg/maxscale.cnf
 else
     cp /mnt/config-template/start-mariadb-instance.sh /mnt/config-map
+    cp /mnt/config-template/backup-save.sh /mnt/config-map
     # if this is not a maxscale instance, make sure to ask maxscale who is the master
     MASTER_HOST=$(cat /mnt/config-map/master)
     if [[ ! -d /var/lib/mysql/mysql ]]; then
-        if [[ ! "$BACKUP_CLAIM_NAME" == "" ]]; then
+        if [[ ! "$RESTORE_FROM_FOLDER" == "" ]]; then
             # restore backup
             cp /mnt/config-template/backup-restore.sh /docker-entrypoint-initdb.d/
         fi

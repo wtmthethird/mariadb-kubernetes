@@ -24,6 +24,4 @@
 {{ tpl (.Files.Get "catalog/maxscale.yaml") . }}
 ---
 {{ tpl (.Files.Get "catalog/state-store.yaml") . }}
-{{ else if eq .Values.mariadb.cluster.topology "backup" }}
-{{ tpl (.Files.Get "catalog/mariabackup.yaml") . }}
 {{ end }}

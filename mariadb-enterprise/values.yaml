@@ -2,7 +2,7 @@ mariadb:
   # general cluster parameters
   cluster:
     id: null                                     # e.g. "1"
-    topology: masterslave                        # possible values "masterslave", "standalone", "galera" or "backup"
+    topology: masterslave                        # possible values "masterslave", "standalone", "galera"
     labels: null                                 # custom labels to be added to the mariadb service, e.g. for discovery   
     annotations: null                            # custom annotations to be added to each pod in the cluster
 
@@ -31,7 +31,9 @@ mariadb:
         cpu: null                                # e.g. "3000m"
         memory: null                             # e.g. "9G"
     backup:
-      claimName: null                              # shared volume mount definition
+      nfs:
+        server: null                             # NFS server hostname or ip
+        path: /                                  # NFS path to mount
       restoreFrom: null                          # name of restore subdirectory
 
 # maxscale parameters
@@ -54,16 +56,3 @@ mariadb:
 # statestore parameters
   statestore:
     image: mariadb/statestore:0.0.3
-
-# backup parameters
-  backup:
-    image: mariadb/server:10.3
-    labels: null                                 # custom labels to be added to the mariadb service, e.g. for discovery   
-    annotations: null                            # custom annotations to be added to each pod in the cluster
-    release:
-      type: masterslave                         # 'masterslave', 'galera' or 'standalone'
-      name: null
-      id: 0
-    volume:
-      claimName: null                          # shared volume mount definition
-      subdirPattern: null                      # pattern for subdirectory with name backup, default backup-serverid-timestamp

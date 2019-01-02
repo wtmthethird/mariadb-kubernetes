@@ -83,6 +83,7 @@ spec:
             name: mariadb-config-vol
           - mountPath: /mnt/config-template
             name: mariadb-configtemplate-vol
+
       # runs an initialization script to prepare the correct startup configuration
       - name: init-galera
         image: {{ .Values.mariadb.server.image }}
@@ -91,8 +92,8 @@ spec:
           - /mnt/config-template/init-configurations.sh
           - galera
         env:
-        - name: BACKUP_CLAIM_NAME
-          value: {{ .Values.mariadb.server.backup.claimName }}
+        - name: RESTORE_FROM_FOLDER
+          value: {{ .Values.mariadb.server.backup.restoreFrom }}
         - name: CLUSTER_TOPOLOGY
           value: {{ .Values.mariadb.cluster.topology }}
         - name: RELEASE_NAME
@@ -109,6 +110,7 @@ spec:
             name: mariadb-configtemplate-vol
           - mountPath: /mnt/config-map
             name: mariadb-config-vol
+
       containers:
       - command:
         # start a mariadb instance
@@ -119,8 +121,6 @@ spec:
           value: "Y"
         - name: RESTORE_FROM_FOLDER
           value: {{ .Values.mariadb.server.backup.restoreFrom }}
-        - name: BACKUP_CLAIM_NAME
-          value: {{ .Values.mariadb.server.backup.claimName }}
         - name: CLUSTER_TOPOLOGY
           value: {{ .Values.mariadb.cluster.topology }}
         image: {{ .Values.mariadb.server.image }}
@@ -149,9 +149,9 @@ spec:
             memory: {{ .Values.mariadb.server.resources.limits.memory }}
             {{- end }}
         volumeMounts:
-        {{- if .Values.mariadb.server.backup.claimName }}
+        {{- if .Values.mariadb.server.backup.nfs.server }}
         - name: backup-data-storage
-          mountPath: /backup
+          mountPath: /backup-storage
         {{- end }}
         - name: mariadb-entrypoint-vol
           mountPath: /docker-entrypoint-initdb.d
@@ -174,6 +174,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 2
           timeoutSeconds: 1
+
       # runs a state store client to ensure the state is being maitained
       - name: state
         image: {{ .Values.mariadb.statestore.image }}
@@ -183,12 +184,19 @@ spec:
         volumeMounts:
           - mountPath: /mnt/config-template
             name: mariadb-configtemplate-vol
+
       restartPolicy: Always
+
       volumes:
-      {{- if .Values.mariadb.server.backup.claimName }}
+      {{- if .Values.mariadb.server.backup.nfs.server }}
       - name: backup-data-storage
-        persistentVolumeClaim:
-          claimName: {{ .Values.mariadb.server.backup.claimName }}
+        nfs:
+          server: {{ .Values.mariadb.server.backup.nfs.server }}
+          path: {{ .Values.mariadb.server.backup.nfs.path }}
+        capacity:
+          storage: 1Mi
+        accessModes:
+          - ReadWriteMany
       {{- end }}
       - name: mariadb-entrypoint-vol
         emptyDir: {}
@@ -200,6 +208,7 @@ spec:
       - name: mariadb-secrets-vol
         secret:
           secretName: {{ .Release.Name }}-mariadb-secret
+
   # ensures persistent volumes end up on the same pod
   volumeClaimTemplates:
   - metadata:

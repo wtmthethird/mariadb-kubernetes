@@ -22,6 +22,9 @@ data:
   maxscale.cnf: |
 {{ tpl (.Files.Get "config/maxscale.cnf") . | indent 4 }}
 
+  backup-save.sh: |
+{{ tpl (.Files.Get "config/backup-save.sh") . | indent 4 }}
+
 {{- if or (eq .Values.mariadb.cluster.topology "standalone") (eq .Values.mariadb.cluster.topology "masterslave") }}
   replication.sql: |
 {{ tpl (.Files.Get "config/replication.sql") . | indent 4 }}
@@ -30,7 +33,7 @@ data:
 {{ tpl (.Files.Get "config/galera.cnf") . | indent 4 }}
 {{- end }}
 
-{{- if .Values.mariadb.server.backup.claimName }}
+{{- if .Values.mariadb.server.backup.restoreFrom }}
   backup-restore.sh: |
 {{ tpl (.Files.Get "config/backup-restore.sh") . | indent 4 }}
 {{- end }}
