@@ -189,6 +189,51 @@ If you also want to connect to an NFS server in order to be able to make backups
 helm install . --name <id> --set mariadb.cluster.topology=masterslave --set mariadb.server.backup.nfs.server=<NFS_SERVER_IP>
 ```
 
+## Parameterization
+The following list of parameters can be used with the helm chart by either modifying the file `values.xml` or through the command line switch `--set <parameter name>=<value>`:
+
+| Parameter                                  | Default                  | Description                                                                                                         |
+|--------------------------------------------|--------------------------|---------------------------------------------------------------------------------------------------------------------|
+| _Global for the cluster_                                                                                                                                                                    |
+| mariadb.cluster.id                         | null                     | A generated unique ID of the cluster (used as a label on all artefacts) for discovery in multi-tenant environments. |
+| Mariadb.cluster.topology                   | masterslave              | The type of cluster to create, one of: masterslave, galera, standalone                                       |
+| mariadb.cluster.labels                     | null                     | An associative array of custom labels in format name:value added to the cluster endpoint                            |
+| mariadb.cluster.annotations                | null                     | An associative array of custom annotations added to each pod in the topology                                        |
+| _Server instances_                         |                          |                                                                                                                     |
+| mariadb.server.users.admin.username        | admin                    | MariaDB admin user                                                                                                  |
+| mariadb.server.users.admin.password        | 5LVTpbGE2cGFtw69         | MariaDB admin password                                                                                              |
+| mariadb.server.users.replication.username  | repl                     | Replcation user name                                                                                                |
+| mariadb.server.users.replication.password  | 5LVTpbGE2cGFtw69         | Replication user password                                                                                           |
+| mariadb.server.storage.class               | null                     | Storage class specification of data volume                                                                          |
+| mariadb.server.storage.size                | 256Mi                    | Size of data volume                                                                                                 |
+| mariadb.server.replicas                    | 3                        | Number of server instances in Master/Slave and Galera topologies. Fixed at 1 in Standalone topology.                |
+| mariadb.server.image                       | mariadb/server:10.3      | Name of Docker image for MariaDB Server                                                                             |
+| mariadb.server.port                        | 3306                     | TCP/IP port on which each MariaDB Server instance exposes a SQL interface.                                          |
+| mariadb.server.labels                      | null                     | An associative array of custom labels in format name:value added to Server pods only                                |
+| mariadb.server.annotations                 | null                     | An associative array of custom annotations in format name:value added to Server pods only                           |
+| mariadb.server.resources.requests.cpu      | null                     | The requested share of CPU for each Server pod                                                                      |
+| mariadb.server.resources.requests.memory   | null                     | The requested memory for each Server pod                                                                            |
+| mariadb.server.resources.limits.cpu        | null                     | The maximum share of CPU for each Server pod                                                                        |
+| mariadb.server.resources.limits.memory     | null                     | The maximum share of memory for each Server pod                                                                     |
+| mariadb.server.backup.nfs.server           | null                     | Backup NFS server host                                                                                              |
+| mariadb.server.backup.nfs.path             | /                        | Backup NFS server path to mount                                                                                     |
+| mariadb.server.backup.nfs.restoreFrom      | null                     | Subdirectory to use to restore the database on initial startup                                                      |
+| _MaxScale instances_                       |                          |                                                                                                                     |
+| mariadb.maxscale.image                     | mariadb/maxscale:2.2     | Name of Docker image for MaxScale                                                                                   |
+| mariadb.maxscale.ports.readonly            | 4008                     | TCP/IP port on which the cluster instance exposes a read-only SQL interface through a service endpoint.             |
+| mariadb.maxscale.ports.readwrite           | 4006                     | TCP/IP port on which the cluster instance exposes a read-write SQL interface through a service endpoint.            |
+| mariadb.maxscale.labels                    | null                     | An associative array of custom labels in format name:value added to MaxScale pods only                              |
+| mariadb.maxscale.annotations               | null                     | An associative array of custom annotations in format name:value added to MaxScale pods only                         |
+| mariadb.maxscale.replicas                  | 2                        | Number of MaxScale instances in Master/Slave and Galera topologies.                                                 |
+| mariadb.maxscale.resources.requests.cpu    | null                     | The requested share of CPU for each MaxScale pod                                                                    |
+| mariadb.maxscale.resources.requests.memory | null                     | The requested memory for each MaxScale pod                                                                          |
+| mariadb.maxscale.resources.limits.cpu      | null                     | The maximum share of CPU for each MaxScale pod                                                                      |
+| mariadb.maxscale.resources.limits.memory   | null                     | The maximum share of memory for each MaxScale pod                                                                   |
+| *StateStore instances*                     |                          |                                                                                                                     |
+| mariadb.statestore.image                   | mariadb/statestore:0.0.3 | Name of Docker image for MariaDB StateStore                                                                         |
+
+Refer to https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#resource-requests-and-limits-of-pod-and-container for the definition of resource requests and limits.
+
 ## Using the cluster
 
 To access the MaxScale node locally, find the ip address of the service:
