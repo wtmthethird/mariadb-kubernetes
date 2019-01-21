@@ -5,13 +5,25 @@ mariadb:
     topology: perf                               # possible values "perf" (more coming soon)
     labels: null                                 # custom labels to be added to the mariadb service, e.g. for discovery   
     annotations: null                            # custom annotations to be added to each pod in the cluster
-
-  test:
+# server on test stand parameters
+  server:
+    host: nedpk-test-stand-mariadb
+    port: 3306
+    user: admin
+    password: 5LVTpbGE2cGFtw69
+#test client parametes
+  testclient:
+    scenario:
+      luascript: oltp.lua
+      initdatabase: "1"
+      totalrows: "1000000"                           # initial number of rows to be loaded
+      runtimero: "10"                               # duration of read queries execution(in secs)
+      runtimerw: "10"                                # duration of write queries execution(in secs)
     perf:
       replicas: 2
       labels: null                                 # custom labels applied to maxscale pods only
       annotations: null                            # custom annotations applied to maxscale pods only
-      image: nedpk/mob-sysbench
+      image: gcr.io/dbaas-development/sysbench:1.0
       resources:
         requests:
           cpu: null                                # e.g. "1000m"

@@ -11,51 +11,70 @@ metadata:
     {{- if .Values.mariadb.cluster.labels }}
 {{ toYaml .Values.mariadb.cluster.labels | indent 4 }}
     {{- end }}
-    {{- if .Values.mariadb.test.perf.labels }}
-{{ toYaml .Values.mariadb.test.perf.labels | indent 4 }}
+    {{- if .Values.mariadb.testclient.perf.labels }}
+{{ toYaml .Values.mariadb.testclient.perf.labels | indent 4 }}
     {{- end }}
 spec:
   selector:
     matchLabels:
       test.perf.mariadb: {{ .Release.Name }}
-  replicas: {{ .Values.mariadb.test.perf.replicas }}
+  replicas: {{ .Values.mariadb.testclient.perf.replicas }}
   template:
     metadata:
       labels:
         mariadb: {{ .Release.Name }}
         test.perf.mariadb: {{ .Release.Name }}
-      {{- if or (.Values.mariadb.cluster.annotations) (.Values.mariadb.test.perf.annotations) }}
+      {{- if or (.Values.mariadb.cluster.annotations) (.Values.mariadb.testclient.perf.annotations) }}
       annotations:
       {{- end }}
       {{- if .Values.mariadb.cluster.annotations }}
 {{ toYaml .Values.mariadb.cluster.annotations | indent 8 }}
       {{- end }}
-      {{- if .Values.mariadb.test.perf.annotations }}
-{{ toYaml .Values.mariadb.test.perf.annotations | indent 8 }}
+      {{- if .Values.mariadb.testclient.perf.annotations }}
+{{ toYaml .Values.mariadb.testclient.perf.annotations | indent 8 }}
       {{- end }}
     spec:
       containers:
       - name: mdb-sysbench
-        image: {{ .Values.mariadb.test.perf.image }}
+        env:
+        - name: LUA_SCRIPT
+          value: {{ .Values.mariadb.testclient.scenario.luascript }}
+        - name: INIT_DATABASE
+          value: "{{ .Values.mariadb.testclient.scenario.initdatabase }}"
+        - name: TOTAL_ROWS
+          value: "{{ .Values.mariadb.testclient.scenario.totalrows }}"
+        - name: RUNTIME_RO
+          value: "{{ .Values.mariadb.testclient.scenario.runtimero }}"
+        - name: RUNTIME_RW
+          value: "{{ .Values.mariadb.testclient.scenario.runtimerw }}"
+        - name: HOST
+          value: {{ .Values.mariadb.server.host }}
+        - name: PORT
+          value: "{{ .Values.mariadb.server.port }}"
+        - name: USER
+          value: {{ .Values.mariadb.server.user }}
+        - name: PASSWORD
+          value: {{ .Values.mariadb.server.password }}
+        image: {{ .Values.mariadb.testclient.perf.image }}
         imagePullPolicy: Always
-        {{- if or (.Values.mariadb.test.perf.resources.limits.cpu) (.Values.mariadb.test.perf.resources.limits.memory) (.Values.mariadb.test.perf.resources.requests.cpu) (.Values.mariadb.test.perf.resources.requests.memory) }}
+        {{- if or (.Values.mariadb.testclient.perf.resources.limits.cpu) (.Values.mariadb.testclient.perf.resources.limits.memory) (.Values.mariadb.testclient.perf.resources.requests.cpu) (.Values.mariadb.testclient.perf.resources.requests.memory) }}
         resources:
         {{- end }}
-          {{- if or (.Values.mariadb.test.perf.resources.requests.cpu) (.Values.mariadb.test.perf.resources.requests.memory) }}
+          {{- if or (.Values.mariadb.testclient.perf.resources.requests.cpu) (.Values.mariadb.testclient.perf.resources.requests.memory) }}
           requests:
           {{- end }}
-            {{- if .Values.mariadb.test.perf.resources.requests.cpu }}
-            cpu: {{ .Values.mariadb.test.perf.resources.requests.cpu }}
+            {{- if .Values.mariadb.testclient.perf.resources.requests.cpu }}
+            cpu: {{ .Values.mariadb.testclient.perf.resources.requests.cpu }}
             {{- end }}
-            {{- if .Values.mariadb.test.perf.resources.requests.memory }}
-            memory: {{ .Values.mariadb.test.perf.resources.requests.memory }}
+            {{- if .Values.mariadb.testclient.perf.resources.requests.memory }}
+            memory: {{ .Values.mariadb.testclient.perf.resources.requests.memory }}
             {{- end }}
-          {{- if or (.Values.mariadb.test.perf.resources.limits.cpu) (.Values.mariadb.test.perf.resources.limits.memory) }}
+          {{- if or (.Values.mariadb.testclient.perf.resources.limits.cpu) (.Values.mariadb.testclient.perf.resources.limits.memory) }}
           limits:
           {{- end }}
-            {{- if .Values.mariadb.test.perf.resources.limits.cpu }}
-            cpu: {{ .Values.mariadb.test.perf.resources.limits.cpu }}
+            {{- if .Values.mariadb.testclient.perf.resources.limits.cpu }}
+            cpu: {{ .Values.mariadb.testclient.perf.resources.limits.cpu }}
             {{- end }}
-            {{- if .Values.mariadb.test.perf.resources.limits.memory }}
-            memory: {{ .Values.mariadb.test.perf.resources.limits.memory }}
+            {{- if .Values.mariadb.testclient.perf.resources.limits.memory }}
+            memory: {{ .Values.mariadb.testclient.perf.resources.limits.memory }}
             {{- end }}
