@@ -20,6 +20,9 @@ metadata:
     id.mariadb: "{{ .Values.mariadb.cluster.id }}"
     {{ end }}
 spec:
+  {{- if .Values.mariadb.maxscale.headless }}
+  clusterIP: None
+  {{- end }}
   selector:
     state-store.mariadb: {{ .Release.Name }}
   ports:

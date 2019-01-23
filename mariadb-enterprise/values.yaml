@@ -52,7 +52,9 @@ mariadb:
       limits:
         cpu: null     # e.g. "3000m"
         memory: null  # e.g. "9G"
+    headless: false
 
 # statestore parameters
   statestore:
     image: mariadb/statestore:0.0.3
+    headless: false

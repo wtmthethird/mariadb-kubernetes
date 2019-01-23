@@ -24,6 +24,9 @@ spec:
   - name: maxscale-readonly
     port: {{ .Values.mariadb.maxscale.ports.readonly }}
     targetPort: {{ .Values.mariadb.maxscale.ports.readonly }}
+  {{- if .Values.mariadb.maxscale.headless }}
+  clusterIP: None
+  {{- end }}
   selector:
     maxscale.mariadb: {{ .Release.Name }}
 ---
